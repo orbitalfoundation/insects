@@ -149,6 +149,15 @@ addEventListener('resize', () => {
 // Canonical camera views for the vision-critic harness: clean lateral / dorsal / front
 // shots (the default oblique foreshortens the dorsal arc we most want to judge).
 function setView(name) {
+  if (name === 'head') {                     // close-up on the head, front-3/4
+    rig.updateMatrixWorld(true);
+    const hb = new THREE.Box3().setFromObject(rig.bodyParts.headGroup);
+    const hc = hb.getCenter(new THREE.Vector3()), hs = Math.max(...hb.getSize(new THREE.Vector3()).toArray());
+    const dir = new THREE.Vector3(0.95, 0.28, 0.72).normalize(), d = hs * 2.4 + 0.05;
+    camera.position.set(hc.x + dir.x * d, hc.y + dir.y * d, hc.z + dir.z * d);
+    controls.target.copy(hc); camera.near = 0.001; camera.updateProjectionMatrix();
+    return;
+  }
   const s = rig.span, c = rig.centre, d = s * 1.7 + 0.4;
   const V = { lateral: [0, 0, 1], dorsal: [0, 1, 0.0001], oblique: [0.9, 0.5, 1],
     front: [1, 0, 0.0001], rear: [-1, 0.12, 0.55] }[name] || [0, 0, 1];

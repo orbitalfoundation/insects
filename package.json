@@ -11,7 +11,8 @@
     "checkfeet": "node scripts/check_feet.mjs",
     "fitness": "node scripts/fitness.mjs",
     "compare": "node scripts/comparator.mjs",
-    "shape": "node scripts/shape.mjs"
+    "shape": "node scripts/shape.mjs",
+    "parts": "node scripts/parts.mjs"
   },
   "license": "ISC",
   "dependencies": {
