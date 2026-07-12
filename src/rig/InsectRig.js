@@ -79,10 +79,13 @@ export class InsectRig extends THREE.Group {
   // its tripod group (for the walk cycle). Fore legs reach forward, hind legs back.
   _poseLeg(rec, L) {
     const { limb, sock } = rec;
-    const fwd = sock.pair === 0 ? 0.45 : sock.pair === 2 ? -0.55 : 0.0;
-    const dir = new THREE.Vector3(fwd, -0.35, sock.side * (0.7 + L.spread)).normalize();
+    const fwd = sock.pair === 0 ? 0.5 : sock.pair === 2 ? -0.55 : 0.0;
+    // Leg root aims down-and-out so the femur reaches to a raised knee.
+    const dir = new THREE.Vector3(fwd, -0.5, sock.side * (0.5 + L.spread * 0.6)).normalize();
     limb.root.quaternion.setFromUnitVectors(Y, dir);
-    let femurLift = 0.75, knee = -2.0, ankle = 1.0;
+    // Moderate zig-zag: femur to a raised knee, tibia descends, tarsus plants pointing
+    // down-forward. (The old knee=-2.0 folded the tibia back UP into the air.)
+    let femurLift = 0.6, knee = -1.35, ankle = 0.95;
     if (L.type === 'raptorial' && sock.pair === 0) { femurLift = 0.1; knee = -2.7; ankle = -0.7; }
     if (L.type === 'saltatorial' && sock.pair === 2) { femurLift = 1.15; knee = -2.5; ankle = 1.2; }
     limb.joints[1].rotation.x = femurLift;
@@ -124,18 +127,20 @@ export class InsectRig extends THREE.Group {
     const s = this.p.surface;
     if (!s.fuzz || s.fuzz <= 0) return;
     const b = this.p.body;
-    const geo = new THREE.ConeGeometry(0.5, 1, 5, 1, true);
+    // Closed, single-sided cones — open double-sided ones showed their dark INTERIORS,
+    // which read as a hollow, inside-out thorax.
+    const geo = new THREE.ConeGeometry(0.5, 1, 5, 1, false);
     geo.translate(0, 0.5, 0); // base at origin, tip at +Y so instance scale = (radius, length, radius)
-    const col = new THREE.Color(s.base).offsetHSL(0, 0.03, 0.06);
-    const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.9, metalness: 0, side: THREE.DoubleSide });
+    const col = new THREE.Color(s.base).offsetHSL(0, -0.04, 0.02);
+    const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.9, metalness: 0, side: THREE.FrontSide });
     this.fuzz = [];
     // (parent group, centre in that frame, rx, ry, rz, count, lenScale)
     this._fuzzPatch(geo, mat, this.bodyParts.root, new THREE.Vector3(0, 0, 0),
-      b.thorax.len * 0.5, b.thorax.h * 0.5, b.thorax.w * 0.5, Math.round(620 * s.fuzz), 0.32);
+      b.thorax.len * 0.5, b.thorax.h * 0.5, b.thorax.w * 0.5, Math.round(1300 * s.fuzz), 0.2);
     this._fuzzPatch(geo, mat, this.bodyParts.headGroup, new THREE.Vector3(b.head.len * 0.5, 0, 0),
-      b.head.len * 0.5, b.head.h * 0.5, b.head.w * 0.5, Math.round(200 * s.fuzz), 0.26);
+      b.head.len * 0.5, b.head.h * 0.5, b.head.w * 0.5, Math.round(420 * s.fuzz), 0.17);
     this._fuzzPatch(geo, mat, this.bodyParts.abGroup, new THREE.Vector3(-b.abdomen.len * 0.16, 0, 0),
-      b.abdomen.len * 0.3, b.abdomen.h * 0.52, b.abdomen.w * 0.52, Math.round(160 * s.fuzz), 0.24);
+      b.abdomen.len * 0.3, b.abdomen.h * 0.52, b.abdomen.w * 0.52, Math.round(320 * s.fuzz), 0.15);
   }
 
   _fuzzPatch(geo, mat, parent, c, rx, ry, rz, count, lenScale) {
@@ -151,14 +156,14 @@ export class InsectRig extends THREE.Group {
       tries++;
       const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, sr = Math.sqrt(Math.max(0, 1 - u * u));
       const dx = sr * Math.cos(th), dy = u, dz = sr * Math.sin(th);
-      if (dy < -0.3) continue;                           // top-biased: skip the underside
+      if (dy < -0.55) continue;                          // cover top + sides (bee fur wraps the thorax), skip only the belly
       pos.set(c.x + dx * rx, c.y + dy * ry, c.z + dz * rz);
       nrm.set(dx / rx, dy / ry, dz / rz).normalize();
       nrm.x += (rnd() - 0.5) * 0.35; nrm.y += (rnd() - 0.5) * 0.35; nrm.z += (rnd() - 0.5) * 0.35;
       nrm.normalize();
       q.setFromUnitVectors(Y, nrm);
-      const len = base * lenScale * (0.6 + 0.55 * rnd());
-      const rad = base * 0.03 * (0.6 + 0.8 * rnd());
+      const len = base * lenScale * (0.72 + 0.4 * rnd());   // tighter length spread → plush, not spiky
+      const rad = base * 0.035 * (0.7 + 0.7 * rnd());
       scl.set(rad, len, rad);
       m.compose(pos, q, scl);
       im.setMatrixAt(placed, m);
