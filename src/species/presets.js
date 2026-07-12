@@ -3,6 +3,7 @@
 
 import { defaults } from '../core/params.js';
 import { clone } from '../core/math.js';
+import fitted from './fitted.js'; // morphometry-fitted proportions (scripts/morphometry.mjs --write)
 
 function merge(base, over) {
   for (const k in over) {
@@ -42,7 +43,7 @@ const OVERRIDES = {
     antennae: { type: 'filiform', len: 0.7, segs: 12, thick: 0.014 },
     head: { eye: 0.28 },
     surface: { base: '#7aa23a', finish: 'matte' },
-    wings: { count: 0 },
+    wings: { count: 2, type: 'tegmina', posture: 'flat', len: 1.9, w: 0.3, venation: 0.4, alpha: 0.5, color: '#b8c89a' },
   },
   dragonfly: {
     displayName: 'Emperor dragonfly', order: 'Odonata', scale: 1.4,
@@ -56,18 +57,21 @@ const OVERRIDES = {
   },
   honeybee: {
     displayName: 'Honeybee', order: 'Hymenoptera', scale: 0.9,
-    body: { head: { len: 0.3, w: 0.4, h: 0.34 }, thorax: { len: 0.44, w: 0.5, h: 0.5, pronotum: 0.2 },
-      abdomen: { len: 0.9, w: 0.5, h: 0.5, segs: 6, taper: 0.7, waist: 0.4, droop: 0.15 } },
-    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.026, spread: 0.4 },
+    // arc: the dorsal catenary; head.tilt tips the face down; strong taper + droop make
+    // the abdomen a down-angled oval closing the rear of the arc.
+    body: { arc: 0.5, head: { len: 0.3, w: 0.4, h: 0.36, tilt: -0.15 },
+      thorax: { len: 0.42, w: 0.5, h: 0.54, pronotum: 0 },
+      abdomen: { len: 0.92, w: 0.54, h: 0.54, segs: 7, taper: 0.62, waist: 0.5, droop: 0.3 } },
+    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.026, spread: 0.4, hind: 1.25 },
     antennae: { type: 'geniculate', len: 0.36, segs: 8, thick: 0.02, elbow: 1.0 },
     head: { eye: 0.26 },
     surface: { base: '#c89020', finish: 'fuzzy', bands: 0.8, bandColor: '#1a1208', fuzz: 0.8 },
-    wings: { count: 4, type: 'membranous', posture: 'flat', len: 0.85, w: 0.34, venation: 0.3, alpha: 0.4, color: '#e8ecf0' },
+    wings: { count: 4, type: 'membranous', posture: 'swept', len: 0.95, w: 0.32, venation: 0.3, alpha: 0.4, color: '#e8ecf0' },
   },
   housefly: {
     displayName: 'Housefly', order: 'Diptera', scale: 0.6,
-    body: { head: { len: 0.32, w: 0.44, h: 0.4 }, thorax: { len: 0.44, w: 0.46, h: 0.44, pronotum: 0.15 },
-      abdomen: { len: 0.6, w: 0.44, h: 0.44, segs: 5, taper: 0.8, droop: 0.12 } },
+    body: { arc: 0.3, head: { len: 0.32, w: 0.44, h: 0.4, tilt: -0.1 }, thorax: { len: 0.44, w: 0.46, h: 0.44, pronotum: 0.15 },
+      abdomen: { len: 0.6, w: 0.44, h: 0.44, segs: 5, taper: 0.55, droop: 0.28 } },
     legs: { type: 'cursorial', femur: 0.28, tibia: 0.32, tarsus: 0.2, thick: 0.022, spread: 0.45 },
     antennae: { type: 'setaceous', len: 0.14, segs: 3, thick: 0.014 },
     head: { eye: 0.42, eyeColor: '#9c1c14', mouth: 'sponging' },
@@ -91,11 +95,14 @@ const OVERRIDES = {
 export const SPECIES_ORDER = ['jewel_beetle', 'ladybird', 'mantis', 'dragonfly', 'honeybee', 'housefly', 'mosquito'];
 export const SPECIES_LABELS = { jewel_beetle: 'Jewel beetle', ladybird: 'Ladybird', mantis: 'Mantis', dragonfly: 'Dragonfly', honeybee: 'Honeybee', housefly: 'Housefly', mosquito: 'Mosquito' };
 
-export function makeSpecies(id) {
+export function makeSpecies(id, applyFit = true) {
   const p = defaults();
   const over = OVERRIDES[id];
   if (!over) throw new Error(`unknown species: ${id}`);
   merge(p, over);
+  // Merge the morphometry-fitted proportions on top (converged onto sourced ground
+  // truth). Pass applyFit=false to measure the hand-authored preset instead.
+  if (applyFit && fitted[id]) merge(p, fitted[id]);
   p.id = id;
   return p;
 }

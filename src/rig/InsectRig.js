@@ -114,7 +114,8 @@ export class InsectRig extends THREE.Group {
     for (const sock of this.bodyParts.eyeSockets) {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), this.eyeMat);
       eye.position.copy(sock.pos);
-      eye.scale.set(0.9, 1.1, 1.2);
+      // Oval, hugging the head side: short front-to-back, tall, flattened against the flank.
+      eye.scale.set(0.72, 1.25, 0.82);
       eye.castShadow = true;
       sock.parent.add(eye);
     }
@@ -183,6 +184,9 @@ export class InsectRig extends THREE.Group {
         case 'up': span = new THREE.Vector3(back * 0.3, 0.9, side * 0.45); norm = new THREE.Vector3(0, 0, side); break;
         case 'roof': span = new THREE.Vector3(-0.25 + back, -0.12, side); norm = new THREE.Vector3(0.1, 0.8, side * 0.5); break;
         case 'flat': span = new THREE.Vector3(-0.7 + back, 0.08, side * 0.55); norm = new THREE.Vector3(0, 1, 0); break;
+        // 'swept': wings raked back over the abdomen at a low angle — the bee-at-rest
+        // gesture that complements the dorsal arc rather than jutting out sideways.
+        case 'swept': span = new THREE.Vector3(-0.9 + back, -0.06, side * 0.34); norm = new THREE.Vector3(0.18, 0.9, side * 0.18); break;
         default: span = new THREE.Vector3(back * 0.4, 0.12, side); norm = new THREE.Vector3(0, 1, 0); // 'out'
       }
       orient(span, norm, q);
@@ -264,6 +268,36 @@ export class InsectRig extends THREE.Group {
 
     // Faint whole-body breathing sway.
     this.rotation.z = Math.sin(t * 0.6) * (m.sway || 0.01);
+  }
+
+  // Measure the assembled model's proportions as a normalized ratio vector — the
+  // same landmark set the reference is annotated with, so a morphometry harness can
+  // score deviation (see scripts/morphometry.mjs). Lengths from part bounding boxes;
+  // appendage lengths from params. All lateral-view ratios relative to body length.
+  // INTRINSIC proportions — measured in the rest frame from the parameters, NOT from
+  // posed world bounding boxes. Posture (the dorsal arc) foreshortens every part's world
+  // projection in both X and Y, which would corrupt the ratios and make the fit fight
+  // the gestalt. Morphometry is about the animal's intrinsic shape; the arc is a
+  // separate expressive layer. Region ratios sum to 1, matching the reference vectors.
+  measure() {
+    const p = this.p, b = p.body;
+    const headLen = b.head.len, thoraxLen = b.thorax.len, abdomenLen = b.abdomen.len;
+    const bodyLen = headLen + thoraxLen + abdomenLen;
+    const bodyH = Math.max(b.head.h, b.thorax.h * (1 + b.thorax.pronotum * 0.3), b.abdomen.h);
+    const eyeDia = 2 * b.head.w * p.head.eye;
+    const legLen = 0.12 + p.legs.femur + p.legs.tibia + p.legs.tarsus; // one leg's segment sum
+    const wingLen = p.wings && p.wings.count > 0 && p.wings.type !== 'elytra' ? p.wings.len : 0;
+    return {
+      bodyLen,
+      headR: headLen / bodyLen,
+      thoraxR: thoraxLen / bodyLen,
+      abdomenR: abdomenLen / bodyLen,
+      heightR: bodyH / bodyLen,
+      eyeR: eyeDia / headLen,
+      wingR: wingLen / bodyLen,
+      legR: legLen / bodyLen,
+      antR: p.antennae.len / bodyLen,
+    };
   }
 
   dispose() {
