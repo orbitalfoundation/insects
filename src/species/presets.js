@@ -39,7 +39,7 @@ const OVERRIDES = {
     displayName: 'Praying mantis', order: 'Mantodea', scale: 1.3,
     body: { head: { len: 0.3, w: 0.44, h: 0.28, tilt: 0.1 }, thorax: { len: 1.0, w: 0.3, h: 0.34, pronotum: 0.1 },
       abdomen: { len: 1.0, w: 0.42, h: 0.4, segs: 8, taper: 0.6, droop: 0.15 } },
-    legs: { type: 'raptorial', femur: 0.5, tibia: 0.48, tarsus: 0.3, thick: 0.03, spread: 0.55, fore: 1.35 },
+    legs: { type: 'raptorial', femur: 0.5, tibia: 0.48, tarsus: 0.3, thick: 0.058, spread: 0.55, fore: 1.35 },
     antennae: { type: 'filiform', len: 0.7, segs: 12, thick: 0.014 },
     head: { eye: 0.28 },
     surface: { base: '#7aa23a', finish: 'matte' },
