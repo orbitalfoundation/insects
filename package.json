@@ -9,7 +9,8 @@
     "render": "node scripts/render.mjs",
     "build": "node scripts/build.mjs",
     "checkfeet": "node scripts/check_feet.mjs",
-    "fitness": "node scripts/fitness.mjs"
+    "fitness": "node scripts/fitness.mjs",
+    "compare": "node scripts/comparator.mjs"
   },
   "license": "ISC",
   "dependencies": {

@@ -81,7 +81,7 @@ export class InsectRig extends THREE.Group {
       limb.root.position.copy(sock.pos);
       limb.tip.add(knob(L.claw * sc * 0.7, this.legMat));
       this.bodyParts.root.add(limb.root);
-      const rec = { limb, sock, sc };
+      const rec = { limb, sock, sc, segLen: segs.map((s) => s.len), segNames: ['coxa', 'trochanter', 'femur', 'tibia', 'basitarsus', 'tarsomere1', 'tarsomere2', 'tarsomere3', 'pretarsus'] };
       this._poseLeg(rec, L);
       this.legs.push(rec);
     }
