@@ -100,7 +100,8 @@ export function buildBody(p, material) {
   // crown, so the head still reads as a golden oval between them.
   const eyeSockets = [];
   for (const side of [-1, 1]) {
-    eyeSockets.push({ pos: new THREE.Vector3(b.head.len * 0.46, b.head.h * 0.2, side * b.head.w * 0.4), side, parent: headGroup });
+    // Upper-rear of the head side, leaving the face (front + lower) clear — as in life.
+    eyeSockets.push({ pos: new THREE.Vector3(b.head.len * 0.4, b.head.h * 0.34, side * b.head.w * 0.42), side, parent: headGroup });
   }
 
   return { root, headGroup, headMesh: head, abGroup, thorax, connectors, legSockets, antennaSockets, wingSockets, eyeSockets,

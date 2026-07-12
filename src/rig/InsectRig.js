@@ -203,8 +203,8 @@ export class InsectRig extends THREE.Group {
     for (const sock of this.bodyParts.eyeSockets) {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), this.eyeMat);
       eye.position.copy(sock.pos);
-      // Oval, hugging the head side: short front-to-back, tall, flattened against the flank.
-      eye.scale.set(0.72, 1.25, 0.82);
+      // Vertical oval hugging the head side: short front-to-back, tall, flattened to the flank.
+      eye.scale.set(0.68, 1.45, 0.62);
       eye.castShadow = true;
       sock.parent.add(eye);
       this.eyeMeshes.push(eye);
