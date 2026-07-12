@@ -18,7 +18,7 @@ const OVERRIDES = {
     displayName: 'Jewel beetle', order: 'Coleoptera', scale: 1.0,
     body: { head: { len: 0.3, w: 0.4, h: 0.3 }, thorax: { len: 0.55, w: 0.52, h: 0.4, pronotum: 0.4 },
       abdomen: { len: 1.0, w: 0.54, h: 0.5, segs: 6, taper: 0.5 } },
-    legs: { type: 'cursorial', femur: 0.3, tibia: 0.32, tarsus: 0.16, thick: 0.05 },
+    legs: { type: 'cursorial', femur: 0.36, tibia: 0.4, tarsus: 0.22, thick: 0.028 },
     antennae: { type: 'serrate', len: 0.4, segs: 8, thick: 0.025 },
     head: { eye: 0.22 },
     surface: { base: '#0f7a3a', finish: 'iridescent', irid: 0.9, iridStrength: 0.8, iridHue: 0.4 },
@@ -28,7 +28,7 @@ const OVERRIDES = {
     displayName: 'Seven-spot ladybird', order: 'Coleoptera', scale: 0.7,
     body: { head: { len: 0.22, w: 0.34, h: 0.24 }, thorax: { len: 0.34, w: 0.5, h: 0.34, pronotum: 0.5 },
       abdomen: { len: 0.62, w: 0.66, h: 0.62, segs: 4, taper: 0.85 } },
-    legs: { type: 'cursorial', femur: 0.2, tibia: 0.2, tarsus: 0.12, thick: 0.04, spread: 0.35 },
+    legs: { type: 'cursorial', femur: 0.26, tibia: 0.28, tarsus: 0.16, thick: 0.026, spread: 0.35 },
     antennae: { type: 'clavate', len: 0.22, segs: 6, thick: 0.02 },
     head: { eye: 0.2 },
     surface: { base: '#d81818', finish: 'gloss', spots: 0.8, spotColor: '#0a0a0a', spotScale: 3 },
@@ -38,7 +38,7 @@ const OVERRIDES = {
     displayName: 'Praying mantis', order: 'Mantodea', scale: 1.3,
     body: { head: { len: 0.3, w: 0.44, h: 0.28, tilt: 0.1 }, thorax: { len: 1.0, w: 0.3, h: 0.34, pronotum: 0.1 },
       abdomen: { len: 1.0, w: 0.42, h: 0.4, segs: 8, taper: 0.6, droop: 0.15 } },
-    legs: { type: 'raptorial', femur: 0.42, tibia: 0.4, tarsus: 0.24, thick: 0.045, spread: 0.6, fore: 1.3 },
+    legs: { type: 'raptorial', femur: 0.5, tibia: 0.48, tarsus: 0.3, thick: 0.03, spread: 0.55, fore: 1.35 },
     antennae: { type: 'filiform', len: 0.7, segs: 12, thick: 0.014 },
     head: { eye: 0.28 },
     surface: { base: '#7aa23a', finish: 'matte' },
@@ -48,7 +48,7 @@ const OVERRIDES = {
     displayName: 'Emperor dragonfly', order: 'Odonata', scale: 1.4,
     body: { head: { len: 0.32, w: 0.5, h: 0.4 }, thorax: { len: 0.5, w: 0.42, h: 0.5, pronotum: 0.2 },
       abdomen: { len: 1.9, w: 0.24, h: 0.24, segs: 10, taper: 0.7, droop: 0.05 } },
-    legs: { type: 'cursorial', femur: 0.22, tibia: 0.24, tarsus: 0.14, thick: 0.03, spread: 0.3 },
+    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.02, spread: 0.28 },
     antennae: { type: 'setaceous', len: 0.14, segs: 4, thick: 0.012 },
     head: { eye: 0.45 },
     surface: { base: '#2a70c0', finish: 'gloss' },
@@ -58,16 +58,38 @@ const OVERRIDES = {
     displayName: 'Honeybee', order: 'Hymenoptera', scale: 0.9,
     body: { head: { len: 0.3, w: 0.4, h: 0.34 }, thorax: { len: 0.44, w: 0.5, h: 0.5, pronotum: 0.2 },
       abdomen: { len: 0.9, w: 0.5, h: 0.5, segs: 6, taper: 0.7, waist: 0.4, droop: 0.15 } },
-    legs: { type: 'cursorial', femur: 0.24, tibia: 0.26, tarsus: 0.16, thick: 0.045, spread: 0.4 },
+    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.026, spread: 0.4 },
     antennae: { type: 'geniculate', len: 0.36, segs: 8, thick: 0.02, elbow: 1.0 },
     head: { eye: 0.26 },
     surface: { base: '#c89020', finish: 'fuzzy', bands: 0.8, bandColor: '#1a1208', fuzz: 0.8 },
     wings: { count: 4, type: 'membranous', posture: 'flat', len: 0.85, w: 0.34, venation: 0.3, alpha: 0.4, color: '#e8ecf0' },
   },
+  housefly: {
+    displayName: 'Housefly', order: 'Diptera', scale: 0.6,
+    body: { head: { len: 0.32, w: 0.44, h: 0.4 }, thorax: { len: 0.44, w: 0.46, h: 0.44, pronotum: 0.15 },
+      abdomen: { len: 0.6, w: 0.44, h: 0.44, segs: 5, taper: 0.8, droop: 0.12 } },
+    legs: { type: 'cursorial', femur: 0.28, tibia: 0.32, tarsus: 0.2, thick: 0.022, spread: 0.45 },
+    antennae: { type: 'setaceous', len: 0.14, segs: 3, thick: 0.014 },
+    head: { eye: 0.42, eyeColor: '#9c1c14', mouth: 'sponging' },
+    surface: { base: '#4c4c46', finish: 'gloss', bands: 0.4, bandColor: '#26261f' },
+    wings: { count: 2, type: 'halteres', posture: 'flat', len: 0.75, w: 0.32, venation: 0.35, alpha: 0.32, color: '#e6ecf0' },
+    motion: { gait: 0.5, groom: 1.0, look: 1 },
+  },
+  mosquito: {
+    displayName: 'Mosquito', order: 'Diptera', scale: 0.7,
+    body: { head: { len: 0.24, w: 0.3, h: 0.28 }, thorax: { len: 0.4, w: 0.34, h: 0.42, pronotum: 0.1 },
+      abdomen: { len: 1.1, w: 0.2, h: 0.2, segs: 8, taper: 0.7, droop: 0.08 } },
+    legs: { type: 'cursorial', femur: 0.5, tibia: 0.6, tarsus: 0.4, thick: 0.015, spread: 0.5 },
+    antennae: { type: 'plumose', len: 0.5, segs: 10, thick: 0.012, spread: 0.3 },
+    head: { eye: 0.34, eyeColor: '#20140a', mouth: 'piercing', proboscis: 0.55 },
+    surface: { base: '#6a5c48', finish: 'matte', bands: 0.5, bandColor: '#3a3026' },
+    wings: { count: 2, type: 'halteres', posture: 'flat', len: 1.0, w: 0.22, venation: 0.4, alpha: 0.28, color: '#d8dce0' },
+    motion: { gait: 0.5, look: 1 },
+  },
 };
 
-export const SPECIES_ORDER = ['jewel_beetle', 'ladybird', 'mantis', 'dragonfly', 'honeybee'];
-export const SPECIES_LABELS = { jewel_beetle: 'Jewel beetle', ladybird: 'Ladybird', mantis: 'Mantis', dragonfly: 'Dragonfly', honeybee: 'Honeybee' };
+export const SPECIES_ORDER = ['jewel_beetle', 'ladybird', 'mantis', 'dragonfly', 'honeybee', 'housefly', 'mosquito'];
+export const SPECIES_LABELS = { jewel_beetle: 'Jewel beetle', ladybird: 'Ladybird', mantis: 'Mantis', dragonfly: 'Dragonfly', honeybee: 'Honeybee', housefly: 'Housefly', mosquito: 'Mosquito' };
 
 export function makeSpecies(id) {
   const p = defaults();

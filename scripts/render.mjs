@@ -17,7 +17,7 @@ const URL = process.env.URL || 'http://localhost:5188/';
 const OUT = process.env.OUT || '/tmp';
 const PORT = 9224;
 const SPECIES = (process.env.SPECIES ||
-  'jewel_beetle,ladybird,mantis,dragonfly,honeybee'
+  'jewel_beetle,ladybird,mantis,dragonfly,honeybee,housefly,mosquito'
 ).split(',');
 
 const chrome = spawn(CHROME, [

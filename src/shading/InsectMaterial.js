@@ -34,10 +34,10 @@ export function makeLegMaterial(surface) {
   });
 }
 
-// Compound eye — dark, faceted, faintly iridescent hemisphere.
-export function makeEyeMaterial() {
+// Compound eye — coloured (red housefly, dark beetle), glossy, faintly iridescent.
+export function makeEyeMaterial(color = '#140a06') {
   return new THREE.MeshPhysicalMaterial({
-    color: 0x140a06, roughness: 0.25, metalness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.1,
+    color: new THREE.Color(color), roughness: 0.25, metalness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.1,
     iridescence: 0.4, iridescenceIOR: 1.4, iridescenceThicknessRange: [200, 700],
   });
 }

@@ -27,7 +27,7 @@ export function defaults() {
 
     legs: {
       type: 'cursorial', // cursorial | saltatorial | raptorial | fossorial | natatorial
-      femur: 0.34, tibia: 0.34, tarsus: 0.18, thick: 0.05,
+      femur: 0.4, tibia: 0.42, tarsus: 0.24, thick: 0.03,
       spread: 0.5, // how far the legs splay out to the sides
       hind: 1.0, fore: 1.0, // per-pair size multipliers (saltatorial hind / raptorial fore)
       claw: 0.03,
@@ -35,13 +35,15 @@ export function defaults() {
 
     antennae: {
       type: 'filiform', // filiform | clavate | lamellate | plumose | geniculate | setaceous
-      len: 0.6, segs: 9, thick: 0.02, spread: 0.4, elbow: 0.0,
+      len: 0.7, segs: 11, thick: 0.012, spread: 0.4, elbow: 0.0,
     },
 
     head: {
       eye: 0.16, // compound-eye radius (fraction of head); huge in dragonflies
+      eyeColor: '#140a06',
       horn: 0.0, // beetle horn length (male dimorphism)
-      mouth: 'chewing',
+      mouth: 'chewing', // chewing | siphoning | sponging | piercing
+      proboscis: 0.0, // length of a projecting proboscis (mosquito/butterfly), 0 = none
     },
 
     wings: {
@@ -61,7 +63,7 @@ export function defaults() {
       fuzz: 0.0, // setae pile (bees)
     },
 
-    motion: { gait: 0.0, wingbeat: 0.0, sway: 0.02 },
+    motion: { gait: 0.6, gaitFreq: 2.4, groom: 0.0, look: 1, wingbeat: 0.0, sway: 0.012 },
   };
 }
 

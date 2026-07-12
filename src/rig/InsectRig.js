@@ -3,6 +3,7 @@ import { buildBody } from './body.js';
 import { buildLimb, knob } from './limb.js';
 import { buildMembraneWing, buildElytron } from './wings.js';
 import { makeChitinMaterial, makeLegMaterial, makeEyeMaterial, makeWingMaterial } from '../shading/InsectMaterial.js';
+import { clamp } from '../core/math.js';
 
 const Y = new THREE.Vector3(0, 1, 0);
 
@@ -23,9 +24,10 @@ export class InsectRig extends THREE.Group {
     this.p = p;
     this.t = 0;
     this.legs = [];
+    this.antennae = [];
     this.chitin = makeChitinMaterial(p.surface);
     this.legMat = makeLegMaterial(p.surface);
-    this.eyeMat = makeEyeMaterial();
+    this.eyeMat = makeEyeMaterial(p.head.eyeColor);
 
     this.bodyParts = buildBody(p, this.chitin);
     this.add(this.bodyParts.root);
@@ -33,6 +35,7 @@ export class InsectRig extends THREE.Group {
     this._buildLegs();
     this._buildAntennae();
     this._buildEyes();
+    this._buildProboscis();
     this._buildWings();
 
     // Extent for camera framing.
@@ -50,35 +53,37 @@ export class InsectRig extends THREE.Group {
     for (const sock of this.bodyParts.legSockets) {
       const sc = sock.pair === 2 ? L.hind : sock.pair === 0 ? L.fore : 1.0;
       const segs = [
-        { len: 0.14 * sc, r0: L.thick * 1.3, r1: L.thick },           // coxa (short)
-        { len: L.femur * sc, r0: L.thick, r1: L.thick * 0.8 },        // femur
-        { len: L.tibia * sc, r0: L.thick * 0.8, r1: L.thick * 0.5 },  // tibia
-        { len: L.tarsus * sc, r0: L.thick * 0.5, r1: L.thick * 0.28 }, // tarsus (foot)
+        { len: 0.12 * sc, r0: L.thick * 1.25, r1: L.thick * 0.95 },    // coxa (short, stout)
+        { len: L.femur * sc, r0: L.thick, r1: L.thick * 0.62 },        // femur (tapers)
+        { len: L.tibia * sc, r0: L.thick * 0.58, r1: L.thick * 0.34 }, // tibia (slender)
+        { len: L.tarsus * sc, r0: L.thick * 0.32, r1: L.thick * 0.16 }, // tarsus (thread-thin foot)
       ];
       const limb = buildLimb(segs, this.legMat);
       limb.root.position.copy(sock.pos);
-      this._poseLeg(limb, sock, L, sc);
-      // A claw knob at the foot.
       limb.tip.add(knob(L.claw * sc, this.legMat));
       this.bodyParts.root.add(limb.root);
-      this.legs.push({ limb, sock, sc });
+      const rec = { limb, sock, sc };
+      this._poseLeg(rec, L);
+      this.legs.push(rec);
     }
   }
 
-  // Pose one leg into the classic insect zig-zag stance (coxa out-down, femur up-out,
-  // tibia down to the ground, tarsus flat). Fore legs reach forward, hind legs back.
-  _poseLeg(limb, sock, L, sc) {
+  // Pose one leg into the classic insect zig-zag stance and record its rest angles +
+  // its tripod group (for the walk cycle). Fore legs reach forward, hind legs back.
+  _poseLeg(rec, L) {
+    const { limb, sock } = rec;
     const fwd = sock.pair === 0 ? 0.45 : sock.pair === 2 ? -0.55 : 0.0;
     const dir = new THREE.Vector3(fwd, -0.35, sock.side * (0.7 + L.spread)).normalize();
     limb.root.quaternion.setFromUnitVectors(Y, dir);
-    // Zig-zag bends (around each joint's local X). Tuned so the foot reaches ~ground.
-    const type = L.type;
     let femurLift = 0.75, knee = -2.0, ankle = 1.0;
-    if (type === 'raptorial' && sock.pair === 0) { femurLift = 0.2; knee = -2.6; ankle = -0.6; } // folded grabbing foreleg
-    if (type === 'saltatorial' && sock.pair === 2) { femurLift = 1.15; knee = -2.5; ankle = 1.2; } // cocked jumping leg
+    if (L.type === 'raptorial' && sock.pair === 0) { femurLift = 0.1; knee = -2.7; ankle = -0.7; }
+    if (L.type === 'saltatorial' && sock.pair === 2) { femurLift = 1.15; knee = -2.5; ankle = 1.2; }
     limb.joints[1].rotation.x = femurLift;
     limb.joints[2].rotation.x = knee;
     limb.joints[3].rotation.x = ankle;
+    rec.base = { f: femurLift, k: knee, a: ankle };
+    // Alternating tripod: front-left, mid-right, hind-left = group 0; the rest = 1.
+    rec.group = (sock.pair + (sock.side > 0 ? 1 : 0)) % 2;
   }
 
   _buildAntennae() {
@@ -100,6 +105,7 @@ export class InsectRig extends THREE.Group {
       const elbow = A.type === 'geniculate' ? A.elbow || 1.1 : 0;
       limb.joints.forEach((j, i) => { j.rotation.x = 0.05 + (i === 1 ? elbow : 0); });
       sock.parent.add(limb.root);
+      this.antennae.push({ limb, side: sock.side, base: limb.joints.map((j) => j.rotation.x) });
     }
   }
 
@@ -112,6 +118,19 @@ export class InsectRig extends THREE.Group {
       eye.castShadow = true;
       sock.parent.add(eye);
     }
+  }
+
+  _buildProboscis() {
+    const pr = this.p.head.proboscis;
+    if (!pr || pr <= 0) return;
+    const h = this.p.body.head;
+    const segs = [];
+    const n = 3;
+    for (let i = 0; i < n; i++) segs.push({ len: pr / n, r0: 0.014 * (1 - i * 0.2), r1: 0.014 * (1 - (i + 1) * 0.2) });
+    const limb = buildLimb(segs, this.legMat, 6);
+    limb.root.position.set(h.len * 0.9, -h.h * 0.2, 0);
+    limb.root.quaternion.setFromUnitVectors(Y, new THREE.Vector3(0.7, -0.7, 0).normalize()); // down-forward
+    this.bodyParts.headGroup.add(limb.root);
   }
 
   _buildWings() {
@@ -184,11 +203,67 @@ export class InsectRig extends THREE.Group {
     }
   }
 
-  update(dt) {
+  update(dt, camera) {
     this.t += dt;
-    // Idle: a gentle antennal/body sway (gait comes next).
-    this.bodyParts.headGroup.rotation.y = Math.sin(this.t * 0.8) * 0.06 * (this.p.motion.sway ? 1 : 0);
-    this.rotation.z = Math.sin(this.t * 0.5) * (this.p.motion.sway || 0);
+    const t = this.t, m = this.p.motion, TAU = Math.PI * 2;
+
+    // --- Walking in place: the alternating tripod. Three legs swing (lift + step
+    // forward) while three stay planted, groups 180° out of phase. The body doesn't
+    // translate — a treadmill walk that reads as "alive".
+    const gait = m.gait ?? 0.6;
+    const freq = m.gaitFreq ?? 2.4;
+    for (const rec of this.legs) {
+      if (rec.groomed) continue; // a foreleg mid-groom isn't walking
+      const ph = t * freq * TAU + rec.group * Math.PI;
+      const lift = Math.max(0, Math.sin(ph));      // swing when > 0
+      const swing = Math.cos(ph);
+      rec.limb.joints[1].rotation.x = rec.base.f - lift * 0.45 * gait;   // femur lifts
+      rec.limb.joints[2].rotation.x = rec.base.k + lift * 0.75 * gait;   // knee straightens → foot up
+      rec.limb.root.rotation.y = swing * 0.18 * gait;                    // fore-aft step
+    }
+
+    // --- Foreleg / antennae grooming (flies): periodically raise the forelegs to the
+    // head and rub — the signature fly behaviour.
+    const groom = m.groom ?? 0;
+    if (groom > 0) {
+      const cyc = (t * 0.25) % 1;                  // groom for a slice of each cycle
+      const active = cyc < 0.35;
+      const rub = Math.sin(t * 14) * 0.18;
+      for (const rec of this.legs) {
+        if (rec.sock.pair !== 0) continue;         // forelegs only
+        rec.groomed = active;
+        if (active) {
+          rec.limb.joints[1].rotation.x = rec.base.f - 1.3 + rub * rec.sock.side; // raise to head
+          rec.limb.joints[2].rotation.x = rec.base.k + 1.4;
+          rec.limb.root.rotation.y = 0.4 * rec.sock.side;
+        }
+      }
+    }
+
+    // --- Antennae: a gentle, always-on twitch/sweep (life).
+    for (const a of this.antennae) {
+      a.limb.joints.forEach((j, i) => {
+        j.rotation.x = a.base[i] + Math.sin(t * 2.2 + i * 0.6 + a.side) * 0.05;
+        j.rotation.z = Math.sin(t * 1.6 + a.side * 1.5) * 0.05;
+      });
+    }
+
+    // --- "Looking at you": the head turns toward the camera (damped), else a slow scan.
+    const hg = this.bodyParts.headGroup;
+    if (camera && (m.look ?? 1)) {
+      const cam = this.worldToLocal(camera.position.clone());
+      const hp = hg.position;
+      const dx = cam.x - hp.x, dy = cam.y - hp.y, dz = cam.z - hp.z;
+      const yaw = clamp(Math.atan2(dz, dx), -0.7, 0.7);        // head faces +X
+      const pitch = clamp(-Math.atan2(dy, Math.hypot(dx, dz)), -0.4, 0.4);
+      hg.rotation.y += (yaw - hg.rotation.y) * 0.06;
+      hg.rotation.x += ((this.p.body.head.tilt || 0) + pitch - hg.rotation.x) * 0.06;
+    } else {
+      hg.rotation.y = Math.sin(t * 0.5) * 0.25;
+    }
+
+    // Faint whole-body breathing sway.
+    this.rotation.z = Math.sin(t * 0.6) * (m.sway || 0.01);
   }
 
   dispose() {

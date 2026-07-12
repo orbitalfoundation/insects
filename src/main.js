@@ -118,7 +118,7 @@ let frames = 0, fpsT = 0, fps = 0;
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
-  if (!ui.paused && rig) rig.update(dt);
+  if (!ui.paused && rig) rig.update(dt, camera);
   env.update(clock.elapsedTime, camera);
   controls.update();
   composer.render();
