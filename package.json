@@ -10,7 +10,8 @@
     "build": "node scripts/build.mjs",
     "checkfeet": "node scripts/check_feet.mjs",
     "fitness": "node scripts/fitness.mjs",
-    "compare": "node scripts/comparator.mjs"
+    "compare": "node scripts/comparator.mjs",
+    "shape": "node scripts/shape.mjs"
   },
   "license": "ISC",
   "dependencies": {
