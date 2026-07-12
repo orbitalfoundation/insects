@@ -1,5 +1,7 @@
 # 🪲 Insects — a parametric bug
 
+### ▸ Live: **[insect.exe.xyz](https://insect.exe.xyz)**
+
 A real-time, biologically-grounded **insect** in Three.js — and the first
 **parts + skeleton** rig in the parametric family. Unlike the earlier single-hull
 creatures (fish, siphonophore, nudibranch), an insect is an *assembly of parametric
@@ -57,10 +59,14 @@ appendage from one reusable part, posed by a skeleton. Colour patterns come from
 parts too (bee bands = alternating segment materials; ladybird spots = placed discs)
 rather than a UV shader.
 
-## Status — v0.1
+## Status
 
-Recognizable across five orders with legs, wings, elytra, venation, banding, spots,
-and structural iridescence. **Not yet:** the alternating-tripod walking gait (the legs
-are posed in a static stance), the full ~16–20 species, wing pattern layer (butterfly
-eyespots), and per-leg IK. See `ROADMAP.md`. Research-and-build only so far — not
-deployed live yet.
+**Live at [insect.exe.xyz](https://insect.exe.xyz)** (exe.dev VM `insect`, push-to-deploy
+autodeploy). Seven species across five orders — jewel beetle, ladybird, mantis,
+dragonfly, honeybee, housefly, mosquito — with legs, wings, elytra, venation, banding,
+spots, structural iridescence, a projecting proboscis, and **animation**: the
+alternating-tripod walking-in-place gait, antennae twitch, head look-at-camera, and fly
+foreleg grooming. **Still improving** (see `ROADMAP.md`): tighter per-species body
+proportions, the weird ones (treehopper pronotal helmet, beetle horns, stick/leaf
+insects), wing pattern layer (butterfly eyespots), and — for the eventual spiders/true
+arthropods — a real physics/gait solver.
