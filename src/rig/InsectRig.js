@@ -91,7 +91,7 @@ export class InsectRig extends THREE.Group {
   // its tripod group (for the walk cycle). Fore legs reach forward, hind legs back.
   _poseLeg(rec, L) {
     const { limb, sock } = rec;
-    const fwd = sock.pair === 0 ? 0.45 : sock.pair === 2 ? -0.55 : 0.0;
+    const fwd = sock.pair === 0 ? 0.5 : sock.pair === 2 ? -0.85 : 0.0; // hind reach back to support the abdomen
     const dir = new THREE.Vector3(fwd, -0.4, sock.side * (0.68 + L.spread)).normalize();
     limb.root.quaternion.setFromUnitVectors(Y, dir);
     // Compact zig-zag (keeps long-legged species from standing on stilts). femur up to a
@@ -199,6 +199,7 @@ export class InsectRig extends THREE.Group {
 
   _buildEyes() {
     const r = Math.max(this.p.body.head.w * this.p.head.eye, 0.01);
+    this.eyeMeshes = [];
     for (const sock of this.bodyParts.eyeSockets) {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), this.eyeMat);
       eye.position.copy(sock.pos);
@@ -206,6 +207,7 @@ export class InsectRig extends THREE.Group {
       eye.scale.set(0.72, 1.25, 0.82);
       eye.castShadow = true;
       sock.parent.add(eye);
+      this.eyeMeshes.push(eye);
     }
   }
 

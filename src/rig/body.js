@@ -115,9 +115,13 @@ function buildSweptAbdomen(a, material, surface) {
   const US = 48, TS = 26;
   const nSeg = Math.max(2, Math.round(a.segs));
   const baseW = a.w * 0.5, baseH = a.h * 0.5;
-  const A0 = -0.14, span = 1 - A0;       // virtual front so u=0 is rounded, not pinched
   const taperExp = lerp(1.5, 0.6, clamp(a.taper, 0, 1));
-  const eggK = 0.28;                      // ovoid asymmetry: fuller front, tapered rear
+  const eggK = 0.06;                      // ovoid asymmetry (gentle — real bee abdomen ~symmetric)
+  // Profile runs the cross-section radius along an ellipse from xnFront (rounded front) to
+  // xnTail. tailBlunt pulls the tail IN from the ellipse tip (xn=1, a sharp point) so the
+  // abdomen ends full and rounds off on the cap — a real bee tail is blunt, not a spike.
+  const xnFront = -0.78;
+  const xnTail = 1 - 0.5 * clamp(a.tailBlunt || 0, 0, 1);
   const plates = a.plates != null ? a.plates : 0.07; // telescoping tergite relief
   const bands = surface.bands > 0;
   const nBands = Math.max(3, Math.round(a.segs * 0.8));
@@ -131,7 +135,7 @@ function buildSweptAbdomen(a, material, surface) {
   const pos = [], col = [], idx = [];
   for (let iu = 0; iu <= US; iu++) {
     const u = iu / US;
-    const xn = ((u - A0) / span) * 2 - 1;                 // -1..1 across the body
+    const xn = xnFront + (xnTail - xnFront) * u;           // front→tail across the ovoid
     // OVOID (egg) profile — an asymmetric prolate spheroid: fuller toward the front,
     // tapering to a point at the tail. A worker bee's abdomen is an ovoid, not a
     // symmetric ellipse; this is a richer primitive than the balloon.
@@ -158,23 +162,31 @@ function buildSweptAbdomen(a, material, surface) {
       col.push(c.r * shade, c.g * shade, c.b * shade);
     }
   }
-  for (let iu = 0; iu < US; iu++) {
+  // Rounded tail cap — dome the tail from its (blunt) last radius down to a point, so the
+  // abdomen ends in a smooth rounded cap like a real bee, not a flat-cut cylinder.
+  const sTail = Math.pow(Math.max(0, Math.sqrt(Math.max(0, 1 - xnTail * xnTail)) * (1 - eggK * xnTail)), taperExp);
+  const rTailW = Math.max(baseW * sTail, 0.0015), rTailH = Math.max(baseH * sTail, 0.0015);
+  const CAPN = 5, capLen = Math.max(rTailW, rTailH) * 1.15;
+  const capCol = gradeAt(1);
+  for (let jc = 1; jc <= CAPN; jc++) {
+    const ang = (jc / CAPN) * (Math.PI / 2), rr = Math.cos(ang), ext = Math.sin(ang) * capLen;
+    for (let it = 0; it <= TS; it++) {
+      const th = (it / TS) * Math.PI * 2;
+      pos.push(-a.len - ext, -a.droop * a.len + rTailH * rr * Math.sin(th), rTailW * rr * Math.cos(th));
+      col.push(capCol.r * 0.72, capCol.g * 0.72, capCol.b * 0.72);
+    }
+  }
+  const rings = US + 1 + CAPN;
+  for (let iu = 0; iu < rings - 1; iu++) {
     for (let it = 0; it < TS; it++) {
       const p0 = iu * (TS + 1) + it, p1 = p0 + (TS + 1);
       idx.push(p0, p1, p0 + 1, p0 + 1, p1, p1 + 1);
     }
   }
-  // End caps — close the front (waist) and the tail so the abdomen is a solid, not an
-  // open tube you can see straight into from behind.
+  // Front (waist) cap only — the tail now closes via the rounded dome above.
   const frontC = pos.length / 3;
   pos.push(0, 0, 0); col.push(baseCol.r, baseCol.g, baseCol.b);
-  const tailC = pos.length / 3;
-  pos.push(-a.len, -a.droop * a.len, 0); col.push(baseCol.r * 0.6, baseCol.g * 0.6, baseCol.b * 0.6);
-  const tailBase = US * (TS + 1);
-  for (let it = 0; it < TS; it++) {
-    idx.push(frontC, it + 1, it);                          // front cap (faces +X, toward the waist)
-    idx.push(tailC, tailBase + it, tailBase + it + 1);     // tail cap (faces −X)
-  }
+  for (let it = 0; it < TS; it++) idx.push(frontC, it + 1, it);
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));

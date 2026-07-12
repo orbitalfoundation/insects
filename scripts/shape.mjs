@@ -59,18 +59,21 @@ for (let v = 0; v < POS.length; v++) {
 
 // ---------- our point clouds per component ----------
 const rig = new InsectRig(makeSpecies('honeybee'));
-function meshPts(obj) {
-  const out = [];
-  obj.traverse((o) => {
+rig.updateMatrixWorld(true);
+function meshPts(...objs) {
+  const out = [], v = new THREE.Vector3();
+  for (const obj of objs) obj.traverse((o) => {
     if (o.isMesh && o.geometry?.attributes?.position) {
       const p = o.geometry.attributes.position;
-      for (let i = 0; i < p.count; i++) out.push(new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i)));
+      // Apply the world matrix — our head/thorax are UNIT spheres with the shape in the
+      // mesh SCALE, not the geometry; reading raw positions would measure a sphere.
+      for (let i = 0; i < p.count; i++) out.push(v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld).clone());
     }
   });
   return out;
 }
 const ourParts = {
-  head: meshPts(rig.bodyParts.headMesh),
+  head: meshPts(rig.bodyParts.headMesh, ...(rig.eyeMeshes || [])), // include eyes (reference head does)
   thorax: meshPts(rig.bodyParts.thorax),
   abdomen: meshPts(rig.bodyParts.abGroup),
 };

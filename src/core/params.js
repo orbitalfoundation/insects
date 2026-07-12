@@ -22,7 +22,7 @@ export function defaults() {
       // Thorax — the leg-bearing box (three fused segments modelled as one lobe).
       thorax: { len: 0.55, w: 0.5, h: 0.44, pronotum: 0.3 },
       // Abdomen — segmented, tapering; `waist` constricts the front (wasp petiole).
-      abdomen: { len: 0.95, w: 0.5, h: 0.46, segs: 7, taper: 0.7, waist: 0.0, droop: 0.1 },
+      abdomen: { len: 0.95, w: 0.5, h: 0.46, segs: 7, taper: 0.7, waist: 0.0, droop: 0.1, tailBlunt: 0.0 },
     },
 
     legs: {
