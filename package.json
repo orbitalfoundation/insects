@@ -8,7 +8,8 @@
     "smoke": "node scripts/smoke.mjs",
     "render": "node scripts/render.mjs",
     "build": "node scripts/build.mjs",
-    "checkfeet": "node scripts/check_feet.mjs"
+    "checkfeet": "node scripts/check_feet.mjs",
+    "fitness": "node scripts/fitness.mjs"
   },
   "license": "ISC",
   "dependencies": {

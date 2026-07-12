@@ -39,10 +39,12 @@ export function buildBody(p, material) {
   root.add(headGroup);
   // Neck bridge: a small connective ellipsoid spanning thorax→head so the join flows
   // rather than showing a gap between two balls.
+  const connectors = [];
   if (b.head.neck >= 0) {
     const neck = ellipsoid(b.head.neck * 0.5 + TL * 0.12, TH * 0.24, TW * 0.28, material);
     neck.position.set(TL * 0.5 + b.head.neck * 0.5, -TH * 0.06 + arc * TH * 0.08, 0);
     root.add(neck);
+    connectors.push(neck);
   }
 
   // --- Abdomen at -X: a tapering, drooping chain of segment ellipsoids ---
@@ -67,6 +69,7 @@ export function buildBody(p, material) {
     const waist = ellipsoid(TL * 0.16 + step * 0.5, TH * 0.36 * wr, TW * 0.36 * wr, material);
     waist.position.set(-TL * 0.5 + step * 0.1, arc * TH * 0.06, 0);
     root.add(waist);
+    connectors.push(waist);
   }
 
   // --- Sockets ---
@@ -100,7 +103,7 @@ export function buildBody(p, material) {
     eyeSockets.push({ pos: new THREE.Vector3(b.head.len * 0.46, b.head.h * 0.2, side * b.head.w * 0.4), side, parent: headGroup });
   }
 
-  return { root, headGroup, headMesh: head, abGroup, thorax, legSockets, antennaSockets, wingSockets, eyeSockets,
+  return { root, headGroup, headMesh: head, abGroup, thorax, connectors, legSockets, antennaSockets, wingSockets, eyeSockets,
     extent: TL + b.head.len + a.len };
 }
 
