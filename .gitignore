@@ -16,3 +16,9 @@ dist/
 
 # exe.dev API token (secret)
 deploy/.api-token
+
+# downloaded reference geometry (Sketchfab scans/models)
+scan/*.glb
+scan/*.gltf
+scan/*.bin
+scan/*.zip

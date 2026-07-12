@@ -59,15 +59,27 @@ export class InsectRig extends THREE.Group {
       const tsc = hind ? (L.hindThick || 1) : 1;
       const femBulk = hind ? (L.hindThick ? 1.35 : 1) : 1;
       const tibWide = hind && L.hindThick ? 1.5 : 1;
+      const T = L.thick;
+      // The UNIVERSAL insect leg blueprint (extracted from a rigged reference bee): five
+      // core segments — coxa, trochanter, femur, tibia — then the tarsus subdivided into an
+      // enlarged basitarsus + shrinking tarsomeres + a tiny pretarsus ending in claws. Nine
+      // segments where we used to have four; this is what reads as a real jointed foot.
+      const tar = L.tarsus * sc;
+      const basiW = hind ? 1.7 : 1;               // hind basitarsus = flattened pollen press
       const segs = [
-        { len: 0.12 * sc, r0: L.thick * 1.25 * tsc, r1: L.thick * 0.95 * tsc },       // coxa (short, stout)
-        { len: L.femur * sc, r0: L.thick * tsc * femBulk, r1: L.thick * 0.62 * tsc },  // femur (tapers; hind bulges)
-        { len: L.tibia * sc, r0: L.thick * 0.58 * tsc * tibWide, r1: L.thick * 0.4 * tsc * tibWide }, // tibia
-        { len: L.tarsus * sc, r0: L.thick * 0.32, r1: L.thick * 0.16 },                // tarsus (thread-thin foot)
+        { len: 0.12 * sc, r0: T * 1.25 * tsc, r1: T * 1.05 * tsc },                    // coxa (hip)
+        { len: 0.16 * L.femur * sc, r0: T * 1.05 * tsc, r1: T * 0.98 * tsc },          // trochanter (short hinge)
+        { len: L.femur * sc, r0: T * tsc * femBulk, r1: T * 0.6 * tsc },               // femur (largest)
+        { len: L.tibia * sc, r0: T * 0.58 * tsc * tibWide, r1: T * 0.4 * tsc * tibWide }, // tibia (shin)
+        { len: tar * 0.4, r0: T * 0.4 * basiW, r1: T * 0.3 * basiW },                  // basitarsus (enlarged)
+        { len: tar * 0.22, r0: T * 0.28, r1: T * 0.24 },                               // tarsomere 1
+        { len: tar * 0.18, r0: T * 0.24, r1: T * 0.2 },                                // tarsomere 2
+        { len: tar * 0.12, r0: T * 0.2, r1: T * 0.16 },                                // tarsomere 3
+        { len: tar * 0.08, r0: T * 0.16, r1: T * 0.09 },                               // pretarsus (→ claws)
       ];
       const limb = buildLimb(segs, this.legMat);
       limb.root.position.copy(sock.pos);
-      limb.tip.add(knob(L.claw * sc, this.legMat));
+      limb.tip.add(knob(L.claw * sc * 0.7, this.legMat));
       this.bodyParts.root.add(limb.root);
       const rec = { limb, sock, sc };
       this._poseLeg(rec, L);
@@ -88,10 +100,18 @@ export class InsectRig extends THREE.Group {
     let femurLift = 0.8, knee = -1.95, ankle = -0.35;
     if (L.type === 'raptorial' && sock.pair === 0) { femurLift = 0.1; knee = -2.7; ankle = -0.7; }
     if (L.type === 'saltatorial' && sock.pair === 2) { femurLift = 1.15; knee = -2.5; ankle = 1.2; }
-    limb.joints[1].rotation.x = femurLift;
-    limb.joints[2].rotation.x = knee;
-    limb.joints[3].rotation.x = ankle;
-    rec.base = { f: femurLift, k: knee, a: ankle };
+    // Joint map for the 9-segment leg: femur base = joints[2], knee (femur→tibia) = [3],
+    // ankle (tibia→basitarsus) = [4], then the tarsomeres curl slightly to plant the foot.
+    // setFromUnitVectors gives the two sides OPPOSITE-handed bend axes, so the same
+    // rotation.x folds the left leg down but the right leg UP (feet in the air near the
+    // head). Flip the bend sign on the right so both sides fold to the ground.
+    const flip = sock.side > 0 ? -1 : 1;
+    rec.flip = flip; rec.jF = 2; rec.jK = 3; rec.jA = 4;
+    limb.joints[rec.jF].rotation.x = femurLift * flip;
+    limb.joints[rec.jK].rotation.x = knee * flip;
+    limb.joints[rec.jA].rotation.x = ankle * flip;
+    for (let j = 5; j <= 7; j++) if (limb.joints[j]) limb.joints[j].rotation.x = 0.12 * flip; // tarsomere curl
+    rec.base = { f: femurLift * flip, k: knee * flip, a: ankle * flip };
     // Alternating tripod: front-left, mid-right, hind-left = group 0; the rest = 1.
     rec.group = (sock.pair + (sock.side > 0 ? 1 : 0)) % 2;
   }
@@ -289,9 +309,12 @@ export class InsectRig extends THREE.Group {
       const ph = t * freq * TAU + rec.group * Math.PI;
       const lift = Math.max(0, Math.sin(ph));      // swing when > 0
       const swing = Math.cos(ph);
-      rec.limb.joints[1].rotation.x = rec.base.f - lift * 0.45 * gait;   // femur lifts
-      rec.limb.joints[2].rotation.x = rec.base.k + lift * 0.75 * gait;   // knee straightens → foot up
-      rec.limb.root.rotation.y = swing * 0.18 * gait;                    // fore-aft step
+      // A small stepping lift — raise the femur slightly and let the knee flex a touch so
+      // the foot clears the ground and arcs forward. Kept small so the (now longer, more
+      // segmented) foot never swings above the body — see scripts/check_feet.mjs.
+      rec.limb.joints[rec.jF].rotation.x = rec.base.f + lift * 0.18 * gait * rec.flip; // femur raises a little
+      rec.limb.joints[rec.jK].rotation.x = rec.base.k - lift * 0.12 * gait * rec.flip; // knee flexes → foot tucks up
+      rec.limb.root.rotation.y = swing * 0.16 * gait;                       // fore-aft step
     }
 
     // --- Foreleg / antennae grooming (flies): periodically raise the forelegs to the
@@ -305,8 +328,8 @@ export class InsectRig extends THREE.Group {
         if (rec.sock.pair !== 0) continue;         // forelegs only
         rec.groomed = active;
         if (active) {
-          rec.limb.joints[1].rotation.x = rec.base.f - 1.3 + rub * rec.sock.side; // raise to head
-          rec.limb.joints[2].rotation.x = rec.base.k + 1.4;
+          rec.limb.joints[rec.jF].rotation.x = rec.base.f - 1.3 * rec.flip + rub * rec.sock.side; // raise to head
+          rec.limb.joints[rec.jK].rotation.x = rec.base.k + 1.4 * rec.flip;
           rec.limb.root.rotation.y = 0.4 * rec.sock.side;
         }
       }

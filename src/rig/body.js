@@ -109,11 +109,13 @@ export function buildBody(p, material) {
 // tail). Banding is baked as vertex colour along the length, so bee/wasp stripes ride a
 // single skin instead of being separate coloured segments.
 function buildSweptAbdomen(a, material, surface) {
-  const US = 32, TS = 24;
+  const US = 48, TS = 26;
   const nSeg = Math.max(2, Math.round(a.segs));
   const baseW = a.w * 0.5, baseH = a.h * 0.5;
   const A0 = -0.14, span = 1 - A0;       // virtual front so u=0 is rounded, not pinched
   const taperExp = lerp(1.5, 0.6, clamp(a.taper, 0, 1));
+  const eggK = 0.28;                      // ovoid asymmetry: fuller front, tapered rear
+  const plates = a.plates != null ? a.plates : 0.07; // telescoping tergite relief
   const bands = surface.bands > 0;
   const nBands = Math.max(3, Math.round(a.segs * 0.8));
   const baseCol = new THREE.Color(material.color);
@@ -126,22 +128,30 @@ function buildSweptAbdomen(a, material, surface) {
   const pos = [], col = [], idx = [];
   for (let iu = 0; iu <= US; iu++) {
     const u = iu / US;
-    const xn = ((u - A0) / span) * 2 - 1;                 // -1..1 across the oval
-    const s = Math.pow(Math.sqrt(Math.max(0, 1 - xn * xn)), taperExp);
+    const xn = ((u - A0) / span) * 2 - 1;                 // -1..1 across the body
+    // OVOID (egg) profile — an asymmetric prolate spheroid: fuller toward the front,
+    // tapering to a point at the tail. A worker bee's abdomen is an ovoid, not a
+    // symmetric ellipse; this is a richer primitive than the balloon.
+    const s0 = Math.sqrt(Math.max(0, 1 - xn * xn)) * (1 - eggK * xn);
+    const s = Math.pow(Math.max(0, s0), taperExp);
     const waistF = a.waist > 0 ? lerp(1 - a.waist, 1, clamp(u / 0.22, 0, 1)) : 1;
-    const rw = Math.max(baseW * s * waistF, 0.0015);
-    const rh = Math.max(baseH * s * waistF, 0.0015);
+    const rw0 = Math.max(baseW * s * waistF, 0.0015);
+    const rh0 = Math.max(baseH * s * waistF, 0.0015);
     const cx = -a.len * u;
     const cy = -a.droop * a.len * u * u;                  // droop toward the tail
     const c = bands && (Math.floor(u * nBands) % 2 === 1) ? bandCol : gradeAt(u);
-    // Segment grooves: subtly darken toward each segment boundary so a single smooth
-    // skin still reads as a segmented abdomen (a stereotypical insect trait).
     const frac = (u * nSeg) - Math.floor(u * nSeg);
     const groove = Math.min(frac, 1 - frac);
     const shade = lerp(0.68, 1.0, clamp(groove / 0.14, 0, 1));
+    // Telescoping TERGITE plates: each segment swells toward its rear edge then tucks
+    // under the next (roof-tile overlap), stronger on the dorsal side (tergites) than the
+    // ventral (sternites) — the surface relief a plain ellipsoid lacks.
+    const pr = frac * frac * (3 - 2 * frac);              // smoothstep rise across each plate
     for (let it = 0; it <= TS; it++) {
       const th = (it / TS) * Math.PI * 2;
-      pos.push(cx, cy + rh * Math.sin(th), rw * Math.cos(th));
+      const sy = Math.sin(th), sz = Math.cos(th);
+      const bump = 1 + plates * pr * (0.3 + 0.7 * Math.max(0, sy)); // dorsal-biased
+      pos.push(cx, cy + rh0 * sy * bump, rw0 * sz * bump);
       col.push(c.r * shade, c.g * shade, c.b * shade);
     }
   }

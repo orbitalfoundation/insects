@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>html,body{margin:0;height:100%;background:#111;overflow:hidden}</style>
+<script type="importmap">
+{ "imports": {
+  "three": "/node_modules/three/build/three.module.js",
+  "three/addons/": "/node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const P = new URLSearchParams(location.search);
+const ry = (+P.get('ry') || 0) * Math.PI / 180;
+const rx = (+P.get('rx') || 0) * Math.PI / 180;
+const plain = P.get('plain') === '1'; // override texture with a matte grey to read pure geometry
+const src = P.get('src') || '/scan/scene.gltf';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111214);
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.001, 1000);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(3, 5, 4); scene.add(key);
+const fill = new THREE.DirectionalLight(0xbfd0ff, 0.8); fill.position.set(-4, 2, -3); scene.add(fill);
+
+new GLTFLoader().load(src, (g) => {
+  const root = g.scene;
+  if (plain) {
+    const m = new THREE.MeshStandardMaterial({ color: 0x9a9a9a, roughness: 0.75, metalness: 0.0 });
+    root.traverse((o) => { if (o.isMesh) o.material = m; });
+  }
+  // Center + rotate
+  const pivot = new THREE.Group();
+  pivot.add(root);
+  scene.add(pivot);
+  const box0 = new THREE.Box3().setFromObject(root);
+  const c0 = box0.getCenter(new THREE.Vector3());
+  root.position.sub(c0);            // center at origin
+  pivot.rotation.set(rx, ry, 0);
+  // Frame
+  const box = new THREE.Box3().setFromObject(pivot);
+  const size = box.getSize(new THREE.Vector3());
+  const c = box.getCenter(new THREE.Vector3());
+  const fov = camera.fov * Math.PI / 180;
+  const fitH = size.y / (2 * Math.tan(fov / 2));
+  const fitW = size.x / (2 * Math.tan(fov / 2) * camera.aspect);
+  const dist = Math.max(fitH, fitW, size.z * 0.6) * 1.35;
+  camera.position.set(c.x, c.y, c.z + dist);
+  camera.lookAt(c);
+  renderer.render(scene, camera);
+  window.SCAN_READY = true;
+  window.SCAN_INFO = { verts: countVerts(root), size: size.toArray().map(n => +n.toFixed(3)) };
+}, undefined, (e) => { window.SCAN_ERR = String(e); });
+
+function countVerts(root){ let v=0; root.traverse(o=>{ if(o.isMesh&&o.geometry) v+=o.geometry.attributes.position.count; }); return v; }
+function loop(){ requestAnimationFrame(loop); renderer.render(scene, camera); }
+loop();
+</script>
+</body>
+</html>
