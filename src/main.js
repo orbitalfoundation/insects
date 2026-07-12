@@ -133,4 +133,23 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
 });
 
-window.BUG = { get params() { return params; }, rig: () => rig, setSpecies };
+// Canonical camera views for the vision-critic harness: clean lateral / dorsal / front
+// shots (the default oblique foreshortens the dorsal arc we most want to judge).
+function setView(name) {
+  const s = rig.span, c = rig.centre, d = s * 1.7 + 0.4;
+  const V = { lateral: [0, 0, 1], dorsal: [0, 1, 0.0001], oblique: [0.9, 0.5, 1],
+    front: [1, 0, 0.0001], rear: [-1, 0.12, 0.55] }[name] || [0, 0, 1];
+  const dir = new THREE.Vector3(V[0], V[1], V[2]).normalize();
+  camera.position.set(c.x + dir.x * d, c.y + dir.y * d, c.z + dir.z * d);
+  controls.target.copy(c);
+  camera.updateProjectionMatrix();
+}
+
+window.BUG = {
+  get params() { return params; },
+  rig: () => rig,
+  setSpecies,
+  setView,
+  pause: (v = true) => { ui.paused = v; },     // freeze the gait for a stable silhouette
+  restPose: () => { if (rig) { rig.t = 0; rig.update(0, camera); } },
+};

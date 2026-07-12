@@ -86,6 +86,13 @@ async function main() {
   for (const sp of SPECIES) {
     await send('Runtime.evaluate', { expression: `window.BUG.setSpecies('${sp}')` });
     await sleep(1400);
+    // Vision-critic mode: freeze at rest pose and shoot a canonical view (VIEW=lateral
+    // /dorsal/front/oblique) so the silhouette is comparable to a reference photo.
+    if (process.env.VIEW) {
+      await send('Runtime.evaluate', { expression:
+        `window.BUG.restPose && window.BUG.restPose(); window.BUG.pause && window.BUG.pause(true); window.BUG.setView && window.BUG.setView('${process.env.VIEW}')` });
+      await sleep(350);
+    }
     const shot = await send('Page.captureScreenshot', { format: 'png' });
     if (shot?.data) writeFileSync(`${OUT}/bug_${sp}.png`, Buffer.from(shot.data, 'base64'));
     process.stdout.write(`shot ${sp} `);
