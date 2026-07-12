@@ -5,28 +5,28 @@ export default {
   "jewel_beetle": {
     "body": {
       "head": {
-        "len": 0.13,
-        "h": 0.188
+        "len": 0.108,
+        "h": 0.157
       },
       "thorax": {
-        "len": 0.286,
-        "h": 0.25
+        "len": 0.238,
+        "h": 0.208
       },
       "abdomen": {
-        "len": 0.845,
-        "h": 0.312
+        "len": 0.704,
+        "h": 0.26
       }
     },
     "legs": {
-      "femur": 0.101,
-      "tibia": 0.113,
-      "tarsus": 0.061
+      "femur": 0.077,
+      "tibia": 0.086,
+      "tarsus": 0.047
     },
     "head": {
-      "eye": 0.075
+      "eye": 0.063
     },
     "antennae": {
-      "len": 0.234
+      "len": 0.195
     }
   },
   "ladybird": {
@@ -45,9 +45,9 @@ export default {
       }
     },
     "legs": {
-      "femur": 0.004,
-      "tibia": 0.004,
-      "tarsus": 0.002
+      "femur": 0.002,
+      "tibia": 0.002,
+      "tarsus": 0.001
     },
     "head": {
       "eye": 0.014
@@ -59,151 +59,151 @@ export default {
   "mantis": {
     "body": {
       "head": {
-        "len": 0.662,
-        "h": 0.866
+        "len": 0.791,
+        "h": 1.034
       },
       "thorax": {
-        "len": 3.407,
-        "h": 1.047
+        "len": 4.068,
+        "h": 1.25
       },
       "abdomen": {
-        "len": 5.678,
-        "h": 1.23
+        "len": 6.78,
+        "h": 1.469
       }
     },
     "legs": {
-      "femur": 3.575,
-      "tibia": 3.43,
-      "tarsus": 2.144
+      "femur": 4.279,
+      "tibia": 4.105,
+      "tarsus": 2.566
     },
     "head": {
-      "eye": 0.329
+      "eye": 0.393
     },
     "antennae": {
-      "len": 2.082
+      "len": 2.486
     },
     "wings": {
-      "len": 8.895
+      "len": 10.621
     }
   },
   "dragonfly": {
     "body": {
       "head": {
-        "len": 0.145,
-        "h": 0.171
+        "len": 0.121,
+        "h": 0.142
       },
       "thorax": {
-        "len": 0.29,
-        "h": 0.213
+        "len": 0.242,
+        "h": 0.177
       },
       "abdomen": {
-        "len": 1.129,
-        "h": 0.102
+        "len": 0.94,
+        "h": 0.085
       }
     },
     "legs": {
-      "femur": 0.074,
-      "tibia": 0.085,
-      "tarsus": 0.05
+      "femur": 0.055,
+      "tibia": 0.063,
+      "tarsus": 0.037
     },
     "head": {
-      "eye": 0.127
+      "eye": 0.106
     },
     "antennae": {
-      "len": 0.032
+      "len": 0.027
     },
     "wings": {
-      "len": 1.033
+      "len": 0.86
     }
   },
   "honeybee": {
     "body": {
       "head": {
-        "len": 0.281,
-        "h": 0.23
+        "len": 0.285,
+        "h": 0.228
       },
       "thorax": {
-        "len": 0.375,
-        "h": 0.34
+        "len": 0.268,
+        "h": 0.337
       },
       "abdomen": {
-        "len": 0.515,
-        "h": 0.34
+        "len": 0.611,
+        "h": 0.337
       }
     },
     "legs": {
-      "femur": 0.233,
-      "tibia": 0.264,
-      "tarsus": 0.156
+      "femur": 0.231,
+      "tibia": 0.262,
+      "tarsus": 0.155
     },
     "head": {
-      "eye": 0.263
+      "eye": 0.267
     },
     "antennae": {
-      "len": 0.375
+      "len": 0.372
     },
     "wings": {
-      "len": 0.796
+      "len": 0.791
     }
   },
   "housefly": {
     "body": {
       "head": {
-        "len": 0.049,
-        "h": 0.093
+        "len": 0.036,
+        "h": 0.069
       },
       "thorax": {
-        "len": 0.087,
-        "h": 0.102
+        "len": 0.064,
+        "h": 0.075
       },
       "abdomen": {
-        "len": 0.139,
-        "h": 0.102
+        "len": 0.102,
+        "h": 0.075
       }
     },
     "legs": {
-      "femur": 0.033,
-      "tibia": 0.038,
-      "tarsus": 0.023
+      "femur": 0.016,
+      "tibia": 0.018,
+      "tarsus": 0.011
     },
     "head": {
-      "eye": 0.047
+      "eye": 0.035
     },
     "antennae": {
-      "len": 0.02
+      "len": 0.015
     },
     "wings": {
-      "len": 0.289
+      "len": 0.213
     }
   },
   "mosquito": {
     "body": {
       "head": {
-        "len": 0.018,
-        "h": 0.018
+        "len": 0.009,
+        "h": 0.009
       },
       "thorax": {
-        "len": 0.044,
-        "h": 0.028
+        "len": 0.024,
+        "h": 0.015
       },
       "abdomen": {
-        "len": 0.098,
-        "h": 0.013
+        "len": 0.052,
+        "h": 0.007
       }
     },
     "legs": {
-      "femur": 0.072,
-      "tibia": 0.086,
-      "tarsus": 0.058
+      "femur": 0.024,
+      "tibia": 0.029,
+      "tarsus": 0.019
     },
     "head": {
-      "eye": 0.026
+      "eye": 0.014
     },
     "antennae": {
-      "len": 0.071
+      "len": 0.038
     },
     "wings": {
-      "len": 0.11
+      "len": 0.059
     }
   }
 };

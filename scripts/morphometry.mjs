@@ -19,7 +19,7 @@ import { InsectRig } from '../src/rig/InsectRig.js';
 // image-estimates (±20%); honeybee/mantis/dragonfly are the best-measured. wingR is
 // omitted for the elytra beetles (their forewings are hard cases, not a free wing).
 export const REFERENCES = {
-  honeybee:     { headR: 0.24, thoraxR: 0.32, abdomenR: 0.44, heightR: 0.29, eyeR: 0.75, wingR: 0.68, legR: 0.66, antR: 0.32, src: 'Apis mellifera worker — India+Saudi morphometry (measured)' },
+  honeybee:     { headR: 0.245, thoraxR: 0.23, abdomenR: 0.525, heightR: 0.29, eyeR: 0.75, wingR: 0.68, legR: 0.66, antR: 0.32, src: 'Apis — region splits from labelled reference model (scripts/comparator.mjs), rest measured' },
   jewel_beetle: { headR: 0.10, thoraxR: 0.22, abdomenR: 0.65, heightR: 0.24, eyeR: 0.45, legR: 0.30, antR: 0.18, src: 'Chrysochroa — length measured, splits img-est' },
   ladybird:     { headR: 0.11, thoraxR: 0.22, abdomenR: 0.67, heightR: 0.62, eyeR: 0.30, legR: 0.42, antR: 0.16, src: 'Coccinella 7-punctata — strongly domed hemisphere; regions normalised to 1' },
   mantis:       { headR: 0.07, thoraxR: 0.36, abdomenR: 0.60, heightR: 0.13, eyeR: 0.45, wingR: 0.94, legR: 0.98, antR: 0.22, src: 'Mantis religiosa — Nayem 2025 measured table' },
