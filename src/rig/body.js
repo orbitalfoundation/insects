@@ -161,6 +161,17 @@ function buildSweptAbdomen(a, material, surface) {
       idx.push(p0, p1, p0 + 1, p0 + 1, p1, p1 + 1);
     }
   }
+  // End caps — close the front (waist) and the tail so the abdomen is a solid, not an
+  // open tube you can see straight into from behind.
+  const frontC = pos.length / 3;
+  pos.push(0, 0, 0); col.push(baseCol.r, baseCol.g, baseCol.b);
+  const tailC = pos.length / 3;
+  pos.push(-a.len, -a.droop * a.len, 0); col.push(baseCol.r * 0.6, baseCol.g * 0.6, baseCol.b * 0.6);
+  const tailBase = US * (TS + 1);
+  for (let it = 0; it < TS; it++) {
+    idx.push(frontC, it + 1, it);                          // front cap (faces +X, toward the waist)
+    idx.push(tailC, tailBase + it, tailBase + it + 1);     // tail cap (faces −X)
+  }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -169,6 +180,7 @@ function buildSweptAbdomen(a, material, surface) {
   const mat = material.clone();
   mat.vertexColors = true;
   mat.color = new THREE.Color(0xffffff);   // let vertex colour drive base+bands
+  mat.side = THREE.DoubleSide;              // caps/rear stay solid regardless of winding
   const mesh = new THREE.Mesh(g, mat);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
