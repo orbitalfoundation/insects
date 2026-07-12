@@ -21,7 +21,7 @@ import { InsectRig } from '../src/rig/InsectRig.js';
 export const REFERENCES = {
   honeybee:     { headR: 0.24, thoraxR: 0.32, abdomenR: 0.44, heightR: 0.29, eyeR: 0.75, wingR: 0.68, legR: 0.66, antR: 0.32, src: 'Apis mellifera worker — India+Saudi morphometry (measured)' },
   jewel_beetle: { headR: 0.10, thoraxR: 0.22, abdomenR: 0.65, heightR: 0.24, eyeR: 0.45, legR: 0.30, antR: 0.18, src: 'Chrysochroa — length measured, splits img-est' },
-  ladybird:     { headR: 0.10, thoraxR: 0.20, abdomenR: 0.60, heightR: 0.43, eyeR: 0.30, legR: 0.45, antR: 0.18, src: 'Coccinella 7-punctata — height measured, splits img-est' },
+  ladybird:     { headR: 0.11, thoraxR: 0.22, abdomenR: 0.67, heightR: 0.62, eyeR: 0.30, legR: 0.42, antR: 0.16, src: 'Coccinella 7-punctata — strongly domed hemisphere; regions normalised to 1' },
   mantis:       { headR: 0.07, thoraxR: 0.36, abdomenR: 0.60, heightR: 0.13, eyeR: 0.45, wingR: 0.94, legR: 0.98, antR: 0.22, src: 'Mantis religiosa — Nayem 2025 measured table' },
   dragonfly:    { headR: 0.09, thoraxR: 0.18, abdomenR: 0.70, heightR: 0.14, eyeR: 0.85, wingR: 0.64, legR: 0.20, antR: 0.02, src: 'Anax imperator — Minot 2019 (wing/body measured)' },
   housefly:     { headR: 0.17, thoraxR: 0.30, abdomenR: 0.48, heightR: 0.37, eyeR: 0.80, wingR: 1.0, legR: 0.70, antR: 0.07, src: 'Musca domestica — length measured, splits img-est' },

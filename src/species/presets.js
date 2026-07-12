@@ -27,8 +27,8 @@ const OVERRIDES = {
   },
   ladybird: {
     displayName: 'Seven-spot ladybird', order: 'Coleoptera', scale: 0.7,
-    body: { head: { len: 0.22, w: 0.34, h: 0.24 }, thorax: { len: 0.34, w: 0.5, h: 0.34, pronotum: 0.5 },
-      abdomen: { len: 0.62, w: 0.66, h: 0.62, segs: 4, taper: 0.85 } },
+    body: { head: { len: 0.22, w: 0.32, h: 0.24 }, thorax: { len: 0.34, w: 0.44, h: 0.34, pronotum: 0.5 },
+      abdomen: { len: 0.7, w: 0.5, h: 0.6, segs: 4, taper: 0.85 } },
     legs: { type: 'cursorial', femur: 0.26, tibia: 0.28, tarsus: 0.16, thick: 0.026, spread: 0.35 },
     antennae: { type: 'clavate', len: 0.22, segs: 6, thick: 0.02 },
     head: { eye: 0.2 },
@@ -65,8 +65,9 @@ const OVERRIDES = {
     legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.028, spread: 0.4, hind: 1.3, hindThick: 1.7 },
     antennae: { type: 'geniculate', len: 0.36, segs: 8, thick: 0.02, elbow: 1.0 },
     head: { eye: 0.26 },
-    surface: { base: '#c89020', finish: 'fuzzy', bands: 0.8, bandColor: '#1a1208', fuzz: 0.8 },
-    wings: { count: 4, type: 'membranous', posture: 'swept', len: 0.95, w: 0.32, venation: 0.3, alpha: 0.4, color: '#e8ecf0' },
+    surface: { base: '#c89020', finish: 'fuzzy', bands: 0.8, bandColor: '#20160a', fuzz: 0.8,
+      fuzzColor: '#a86f22', abdomenGrade: 1, gradeColor: '#c8641a' },
+    wings: { count: 4, type: 'membranous', posture: 'swept', len: 1.18, w: 0.34, venation: 0.3, alpha: 0.4, color: '#e8ecf0' },
   },
   housefly: {
     displayName: 'Housefly', order: 'Diptera', scale: 0.6,

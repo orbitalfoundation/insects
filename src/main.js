@@ -42,11 +42,24 @@ let rig = null;
 let currentSpecies = DEFAULT_ID;
 
 function frameCamera(preserve = false) {
-  const s = rig.span;
-  const c = rig.centre;
-  const dist = s * 1.5 + 0.4;
+  // Fresh world bbox AFTER the model's ground-lift (rig.centre is captured pre-lift, so
+  // for long-legged species it sits well below the real body — which threw the body off
+  // the top of the frame).
+  rig.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(rig);
+  const c = box.getCenter(new THREE.Vector3());
+  const s = Math.max(...box.getSize(new THREE.Vector3()).toArray());
   if (!preserve) {
-    camera.position.set(c.x + s * 0.9, c.y + s * 0.5, dist);
+    // Fit the WHOLE bounding box to the FOV (both height and width) so tall, long-legged
+    // species (mosquito, mantis) frame as well as compact ones.
+    const size = box.getSize(new THREE.Vector3());
+    const fov = (camera.fov * Math.PI) / 180;
+    const aspect = camera.aspect || innerWidth / innerHeight;
+    const fitH = size.y / (2 * Math.tan(fov / 2));
+    const fitW = size.x / (2 * Math.tan(fov / 2) * aspect);
+    const dist = Math.max(fitH, fitW, size.z * 0.6) * 1.45 + 0.4;
+    const dir = new THREE.Vector3(0.72, 0.34, 1).normalize();
+    camera.position.set(c.x + dir.x * dist, c.y + dir.y * dist, c.z + dir.z * dist);
     controls.target.copy(c);
   }
   camera.near = Math.max(0.01, s * 0.01);

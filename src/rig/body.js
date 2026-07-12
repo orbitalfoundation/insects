@@ -118,6 +118,11 @@ function buildSweptAbdomen(a, material, surface) {
   const nBands = Math.max(3, Math.round(a.segs * 0.8));
   const baseCol = new THREE.Color(material.color);
   const bandCol = new THREE.Color(surface.bandColor || '#1a1208');
+  // Optional longitudinal colour grade: warm amber at the front (near the thorax),
+  // easing to the base colour toward the tail — the honeybee's orange-to-dark abdomen.
+  const grade = surface.abdomenGrade || 0;
+  const frontCol = new THREE.Color(surface.gradeColor || surface.base);
+  const gradeAt = (u) => grade > 0 ? frontCol.clone().lerp(baseCol, clamp(u * 1.25, 0, 1)) : baseCol;
   const pos = [], col = [], idx = [];
   for (let iu = 0; iu <= US; iu++) {
     const u = iu / US;
@@ -128,7 +133,7 @@ function buildSweptAbdomen(a, material, surface) {
     const rh = Math.max(baseH * s * waistF, 0.0015);
     const cx = -a.len * u;
     const cy = -a.droop * a.len * u * u;                  // droop toward the tail
-    const c = bands && (Math.floor(u * nBands) % 2 === 1) ? bandCol : baseCol;
+    const c = bands && (Math.floor(u * nBands) % 2 === 1) ? bandCol : gradeAt(u);
     // Segment grooves: subtly darken toward each segment boundary so a single smooth
     // skin still reads as a segmented abdomen (a stereotypical insect trait).
     const frac = (u * nSeg) - Math.floor(u * nSeg);

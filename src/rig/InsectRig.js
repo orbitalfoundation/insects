@@ -79,13 +79,13 @@ export class InsectRig extends THREE.Group {
   // its tripod group (for the walk cycle). Fore legs reach forward, hind legs back.
   _poseLeg(rec, L) {
     const { limb, sock } = rec;
-    const fwd = sock.pair === 0 ? 0.5 : sock.pair === 2 ? -0.55 : 0.0;
-    // Leg root aims down-and-out so the femur reaches to a raised knee.
-    const dir = new THREE.Vector3(fwd, -0.5, sock.side * (0.5 + L.spread * 0.6)).normalize();
+    const fwd = sock.pair === 0 ? 0.45 : sock.pair === 2 ? -0.55 : 0.0;
+    const dir = new THREE.Vector3(fwd, -0.4, sock.side * (0.68 + L.spread)).normalize();
     limb.root.quaternion.setFromUnitVectors(Y, dir);
-    // Moderate zig-zag: femur to a raised knee, tibia descends, tarsus plants pointing
-    // down-forward. (The old knee=-2.0 folded the tibia back UP into the air.)
-    let femurLift = 0.6, knee = -1.35, ankle = 0.95;
+    // Compact zig-zag (keeps long-legged species from standing on stilts). femur up to a
+    // raised knee, tibia folds down, tarsus plants pointing DOWN — the old ankle=+1.0
+    // curled the foot back up into the air, which was the real bug.
+    let femurLift = 0.8, knee = -1.95, ankle = -0.35;
     if (L.type === 'raptorial' && sock.pair === 0) { femurLift = 0.1; knee = -2.7; ankle = -0.7; }
     if (L.type === 'saltatorial' && sock.pair === 2) { femurLift = 1.15; knee = -2.5; ankle = 1.2; }
     limb.joints[1].rotation.x = femurLift;
@@ -131,14 +131,15 @@ export class InsectRig extends THREE.Group {
     // which read as a hollow, inside-out thorax.
     const geo = new THREE.ConeGeometry(0.5, 1, 5, 1, false);
     geo.translate(0, 0.5, 0); // base at origin, tip at +Y so instance scale = (radius, length, radius)
-    const col = new THREE.Color(s.base).offsetHSL(0, -0.04, 0.02);
+    // Warm ochre-brown pile (a real bee's fur is browner than its cuticle stripes).
+    const col = s.fuzzColor ? new THREE.Color(s.fuzzColor) : new THREE.Color(s.base).offsetHSL(0, -0.04, 0.02);
     const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.9, metalness: 0, side: THREE.FrontSide });
     this.fuzz = [];
     // (parent group, centre in that frame, rx, ry, rz, count, lenScale)
     this._fuzzPatch(geo, mat, this.bodyParts.root, new THREE.Vector3(0, 0, 0),
       b.thorax.len * 0.5, b.thorax.h * 0.5, b.thorax.w * 0.5, Math.round(1300 * s.fuzz), 0.2);
     this._fuzzPatch(geo, mat, this.bodyParts.headGroup, new THREE.Vector3(b.head.len * 0.5, 0, 0),
-      b.head.len * 0.5, b.head.h * 0.5, b.head.w * 0.5, Math.round(420 * s.fuzz), 0.17);
+      b.head.len * 0.52, b.head.h * 0.52, b.head.w * 0.52, Math.round(720 * s.fuzz), 0.16);
     this._fuzzPatch(geo, mat, this.bodyParts.abGroup, new THREE.Vector3(-b.abdomen.len * 0.16, 0, 0),
       b.abdomen.len * 0.3, b.abdomen.h * 0.52, b.abdomen.w * 0.52, Math.round(320 * s.fuzz), 0.15);
   }

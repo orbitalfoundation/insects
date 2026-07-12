@@ -60,7 +60,8 @@ export function defaults() {
       irid: 0.0, iridStrength: 0.6, iridHue: 0.35, // structural colour: amount, angle-dependence, hue
       spots: 0.0, spotColor: '#101010', spotScale: 6,
       bands: 0.0, bandColor: '#f0c000',
-      fuzz: 0.0, // setae pile (bees)
+      fuzz: 0.0, fuzzColor: '', // setae pile (bees); fuzzColor '' = derive from base
+      abdomenGrade: 0.0, gradeColor: '', // longitudinal amber→base grade on the abdomen
     },
 
     motion: { gait: 0.6, gaitFreq: 2.4, groom: 0.0, look: 1, wingbeat: 0.0, sway: 0.012 },
