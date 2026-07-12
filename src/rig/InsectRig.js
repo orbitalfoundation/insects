@@ -37,6 +37,7 @@ export class InsectRig extends THREE.Group {
     this._buildEyes();
     this._buildProboscis();
     this._buildWings();
+    this._buildFuzz();
 
     // Extent for camera framing.
     this.updateMatrixWorld(true);
@@ -52,11 +53,17 @@ export class InsectRig extends THREE.Group {
     const L = this.p.legs;
     for (const sock of this.bodyParts.legSockets) {
       const sc = sock.pair === 2 ? L.hind : sock.pair === 0 ? L.fore : 1.0;
+      // Hind legs can be MUSCULAR (bee pollen legs, hopper jumping legs): thicken the
+      // whole leg and bulge the femur + widen the tibia into a flattened "basket".
+      const hind = sock.pair === 2;
+      const tsc = hind ? (L.hindThick || 1) : 1;
+      const femBulk = hind ? (L.hindThick ? 1.35 : 1) : 1;
+      const tibWide = hind && L.hindThick ? 1.5 : 1;
       const segs = [
-        { len: 0.12 * sc, r0: L.thick * 1.25, r1: L.thick * 0.95 },    // coxa (short, stout)
-        { len: L.femur * sc, r0: L.thick, r1: L.thick * 0.62 },        // femur (tapers)
-        { len: L.tibia * sc, r0: L.thick * 0.58, r1: L.thick * 0.34 }, // tibia (slender)
-        { len: L.tarsus * sc, r0: L.thick * 0.32, r1: L.thick * 0.16 }, // tarsus (thread-thin foot)
+        { len: 0.12 * sc, r0: L.thick * 1.25 * tsc, r1: L.thick * 0.95 * tsc },       // coxa (short, stout)
+        { len: L.femur * sc, r0: L.thick * tsc * femBulk, r1: L.thick * 0.62 * tsc },  // femur (tapers; hind bulges)
+        { len: L.tibia * sc, r0: L.thick * 0.58 * tsc * tibWide, r1: L.thick * 0.4 * tsc * tibWide }, // tibia
+        { len: L.tarsus * sc, r0: L.thick * 0.32, r1: L.thick * 0.16 },                // tarsus (thread-thin foot)
       ];
       const limb = buildLimb(segs, this.legMat);
       limb.root.position.copy(sock.pos);
@@ -107,6 +114,61 @@ export class InsectRig extends THREE.Group {
       sock.parent.add(limb.root);
       this.antennae.push({ limb, side: sock.side, base: limb.joints.map((j) => j.rotation.x) });
     }
+  }
+
+  // Real pile: short instanced hairs scattered over the upper surfaces of the thorax /
+  // head / abdomen-front, oriented along the surface normal with jitter. This is what
+  // gives a bee its fuzzy silhouette — the single trait that most separates a bee from a
+  // wasp. Driven by surface.fuzz; skipped entirely when 0 (smooth-cuticle species).
+  _buildFuzz() {
+    const s = this.p.surface;
+    if (!s.fuzz || s.fuzz <= 0) return;
+    const b = this.p.body;
+    const geo = new THREE.ConeGeometry(0.5, 1, 5, 1, true);
+    geo.translate(0, 0.5, 0); // base at origin, tip at +Y so instance scale = (radius, length, radius)
+    const col = new THREE.Color(s.base).offsetHSL(0, 0.03, 0.06);
+    const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.9, metalness: 0, side: THREE.DoubleSide });
+    this.fuzz = [];
+    // (parent group, centre in that frame, rx, ry, rz, count, lenScale)
+    this._fuzzPatch(geo, mat, this.bodyParts.root, new THREE.Vector3(0, 0, 0),
+      b.thorax.len * 0.5, b.thorax.h * 0.5, b.thorax.w * 0.5, Math.round(620 * s.fuzz), 0.32);
+    this._fuzzPatch(geo, mat, this.bodyParts.headGroup, new THREE.Vector3(b.head.len * 0.5, 0, 0),
+      b.head.len * 0.5, b.head.h * 0.5, b.head.w * 0.5, Math.round(200 * s.fuzz), 0.26);
+    this._fuzzPatch(geo, mat, this.bodyParts.abGroup, new THREE.Vector3(-b.abdomen.len * 0.16, 0, 0),
+      b.abdomen.len * 0.3, b.abdomen.h * 0.52, b.abdomen.w * 0.52, Math.round(160 * s.fuzz), 0.24);
+  }
+
+  _fuzzPatch(geo, mat, parent, c, rx, ry, rz, count, lenScale) {
+    if (count <= 0) return;
+    const im = new THREE.InstancedMesh(geo, mat, count);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3();
+    const nrm = new THREE.Vector3();
+    let seed = (count * 2654435761) >>> 0;              // deterministic scatter (stable across reloads)
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const base = Math.min(rx, ry, rz);
+    let placed = 0, tries = 0;
+    while (placed < count && tries < count * 5) {
+      tries++;
+      const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, sr = Math.sqrt(Math.max(0, 1 - u * u));
+      const dx = sr * Math.cos(th), dy = u, dz = sr * Math.sin(th);
+      if (dy < -0.3) continue;                           // top-biased: skip the underside
+      pos.set(c.x + dx * rx, c.y + dy * ry, c.z + dz * rz);
+      nrm.set(dx / rx, dy / ry, dz / rz).normalize();
+      nrm.x += (rnd() - 0.5) * 0.35; nrm.y += (rnd() - 0.5) * 0.35; nrm.z += (rnd() - 0.5) * 0.35;
+      nrm.normalize();
+      q.setFromUnitVectors(Y, nrm);
+      const len = base * lenScale * (0.6 + 0.55 * rnd());
+      const rad = base * 0.03 * (0.6 + 0.8 * rnd());
+      scl.set(rad, len, rad);
+      m.compose(pos, q, scl);
+      im.setMatrixAt(placed, m);
+      placed++;
+    }
+    im.count = placed;
+    im.instanceMatrix.needsUpdate = true;
+    im.castShadow = true;
+    parent.add(im);
+    this.fuzz.push(im);
   }
 
   _buildEyes() {

@@ -62,7 +62,7 @@ const OVERRIDES = {
     body: { arc: 0.5, head: { len: 0.3, w: 0.4, h: 0.36, tilt: -0.15 },
       thorax: { len: 0.42, w: 0.5, h: 0.54, pronotum: 0 },
       abdomen: { len: 0.92, w: 0.54, h: 0.54, segs: 7, taper: 0.62, waist: 0.5, droop: 0.3 } },
-    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.026, spread: 0.4, hind: 1.25 },
+    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.028, spread: 0.4, hind: 1.3, hindThick: 1.7 },
     antennae: { type: 'geniculate', len: 0.36, segs: 8, thick: 0.02, elbow: 1.0 },
     head: { eye: 0.26 },
     surface: { base: '#c89020', finish: 'fuzzy', bands: 0.8, bandColor: '#1a1208', fuzz: 0.8 },
