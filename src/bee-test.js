@@ -104,7 +104,7 @@ rig.traverse((o) => { if (o.isInstancedMesh) o.visible = false; else if (o.isMes
 
 // ---- GUI ----
 const cfg = { real: true, synth: true, realOpacity: 0.85, synthWire: true, synthOpacity: 0.9,
-  isolate: 'all', mode: 'overlay', realRotY: 0, realScale: 1, realY: 0, realX: 0 };
+  isolate: 'all', mode: 'overlay', synthRotY: 0, synthScale: 1, synthY: 0, synthX: 0 };
 const gui = new GUI({ title: 'bee-test' });
 gui.add(cfg, 'real').name('show real').onChange(apply);
 gui.add(cfg, 'synth').name('show synthetic').onChange(apply);
@@ -113,14 +113,17 @@ gui.add(cfg, 'synthWire').name('synth wireframe').onChange(apply);
 gui.add(cfg, 'synthOpacity', 0.1, 1, 0.05).name('synth opacity').onChange(apply);
 gui.add(cfg, 'isolate', ['all', ...PARTS]).name('isolate part').onChange(apply);
 gui.add(cfg, 'mode', ['overlay', 'sidebyside']).name('layout').onChange(apply);
-const fa = gui.addFolder('fine align (real)');
-fa.add(cfg, 'realRotY', -Math.PI, Math.PI, 0.01).name('rotate Y').onChange(apply);
-fa.add(cfg, 'realScale', 0.7, 1.3, 0.01).name('scale').onChange(apply);
-fa.add(cfg, 'realX', -1, 1, 0.02).name('shift X').onChange(apply);
-fa.add(cfg, 'realY', -1, 1, 0.02).name('shift Y').onChange(apply);
+const fa = gui.addFolder('fine align (synthetic → real)');   // real is the fixed reference; nudge synth
+fa.add(cfg, 'synthRotY', -Math.PI, Math.PI, 0.01).name('rotate Y').onChange(apply);
+fa.add(cfg, 'synthScale', 0.7, 1.3, 0.01).name('scale').onChange(apply);
+fa.add(cfg, 'synthX', -1, 1, 0.02).name('shift X').onChange(apply);
+fa.add(cfg, 'synthY', -1, 1, 0.02).name('shift Y').onChange(apply);
 
-// ---- 3-landmark similarity alignment (head/thorax/abdomen centroids) ----
-const basePos = new THREE.Vector3(), baseQuat = new THREE.Quaternion(); let baseScale = 1; const synthThorax = new THREE.Vector3(); const synthHead = new THREE.Vector3();
+// ---- alignment: keep the REAL bee in its authored pose (rotation + translation); only
+// SCALE it to our units. Transform the SYNTHETIC bee to match it. ----
+let realScale = 1, synthScale = 1;
+const synthPos = new THREE.Vector3(), synthQuat = new THREE.Quaternion();
+const realThoraxW = new THREE.Vector3(), realHeadW = new THREE.Vector3(), realFrame = new THREE.Matrix4();
 const bcenter = (...objs) => { const b = new THREE.Box3(); for (const o of objs) { o.updateWorldMatrix(true, true); b.expandByObject(o); } return b.getCenter(new THREE.Vector3()); };
 // frame from forward (head−thorax) + an OFF-AXIS ventral landmark (legs) to fix the roll —
 // head/thorax/abdomen are collinear and leave "up" undefined (→ upside-down bees).
@@ -134,17 +137,28 @@ function frameMat(h, t, ventral) {
 }
 function computeAlign() {
   realRoot.updateMatrixWorld(true); synthRoot.updateMatrixWorld(true);
-  const rh = bcenter(realParts.head), rt = bcenter(realParts.thorax);
-  const rl = realParts.leg ? bcenter(realParts.leg) : bcenter(realParts.abdomen);
+  // authored real landmarks (realPivot still identity here) — real keeps this pose
+  const rhA = bcenter(realParts.head), rtA = bcenter(realParts.thorax), raA = bcenter(realParts.abdomen);
+  const rlA = realParts.leg ? bcenter(realParts.leg) : raA;
+  const bodyBox = new THREE.Box3();
+  for (const p of ['head', 'thorax', 'abdomen']) if (realParts[p]) bodyBox.expandByObject(realParts[p]);
+  realScale = 2.5 / Math.max(bodyBox.getSize(new THREE.Vector3()).length(), 1e-6); // ONLY a uniform scale for real
+  const rhW = rhA.clone().multiplyScalar(realScale), rtW = rtA.clone().multiplyScalar(realScale), rlW = rlA.clone().multiplyScalar(realScale);
+  realThoraxW.copy(rtW); realHeadW.copy(rhW); realFrame.copy(frameMat(rhW, rtW, rlW));
+  // synth landmarks → transform SYNTHETIC to match the (scaled, authored-pose) real bee
   const sh = bcenter(rig.bodyParts.headMesh), st = bcenter(rig.bodyParts.thorax);
   const sl = bcenter(...rig.legs.map((l) => l.limb.root));
-  const Rm = new THREE.Matrix4().multiplyMatrices(frameMat(sh, st, sl), frameMat(rh, rt, rl).transpose()); // real frame → synth frame
-  baseQuat.setFromRotationMatrix(Rm);
-  baseScale = sh.distanceTo(st) / Math.max(rh.distanceTo(rt), 1e-6);
-  basePos.copy(st).sub(rt.clone().applyMatrix4(Rm).multiplyScalar(baseScale));  // map real thorax → synth thorax
-  synthThorax.copy(st); synthHead.copy(sh);
-  grid.position.y = new THREE.Box3().setFromObject(rig).min.y - 0.02; // drop the grid to the feet
-  controls.target.copy(st); camera.position.set(st.x + 0.4, st.y + 0.25, st.z + 2.6); // frame a lateral-ish view
+  const R = new THREE.Matrix4().multiplyMatrices(realFrame, frameMat(sh, st, sl).transpose()); // synth frame → real frame
+  synthQuat.setFromRotationMatrix(R);
+  synthScale = rhW.distanceTo(rtW) / Math.max(sh.distanceTo(st), 1e-6);
+  synthPos.copy(rtW).sub(st.clone().applyMatrix4(R).multiplyScalar(synthScale));
+  grid.position.y = new THREE.Box3().setFromObject(realRoot).min.y * realScale - 0.02; // grid at real's feet
+  lateralView();
+}
+function lateralView() {                          // side-on view of the real bee in its own pose
+  const e3 = new THREE.Vector3().setFromMatrixColumn(realFrame, 2), e2 = new THREE.Vector3().setFromMatrixColumn(realFrame, 1);
+  controls.target.copy(realThoraxW);
+  camera.position.copy(realThoraxW).addScaledVector(e3, 5.0).addScaledVector(e2, 0.7);
 }
 
 function apply() {
@@ -156,24 +170,25 @@ function apply() {
   synthMat.wireframe = cfg.synthWire; synthMat.opacity = cfg.synthOpacity;
   rig.traverse((o) => { if (o.isInstancedMesh || !o.isMesh) return; const p = o.userData.synthPart || 'thorax';
     o.visible = (cfg.isolate === 'all' || p === cfg.isolate || (cfg.isolate === 'head' && p === 'eye')); });
-  const side = cfg.mode === 'sidebyside', C = synthThorax;
-  // base similarity fit, then optional fine-align nudges rotating about the shared thorax C
+  // REAL: uniform scale only — authored rotation + translation preserved (feet stay on ground)
+  realPivot.matrixAutoUpdate = false; realPivot.matrix.makeScale(realScale, realScale, realScale); realPivot.matrixWorldNeedsUpdate = true;
+  // SYNTHETIC: base fit onto the real bee + fine-align nudges about the real thorax
+  const side = cfg.mode === 'sidebyside', C = realThoraxW;
   const M = new THREE.Matrix4()
-    .multiply(new THREE.Matrix4().makeTranslation(cfg.realX + (side ? 1.6 : 0), cfg.realY, 0))
+    .multiply(new THREE.Matrix4().makeTranslation(cfg.synthX + (side ? 1.6 : 0), cfg.synthY, 0))
     .multiply(new THREE.Matrix4().makeTranslation(C.x, C.y, C.z))
-    .multiply(new THREE.Matrix4().makeRotationY(cfg.realRotY))
-    .multiply(new THREE.Matrix4().makeScale(cfg.realScale, cfg.realScale, cfg.realScale))
+    .multiply(new THREE.Matrix4().makeRotationY(cfg.synthRotY))
+    .multiply(new THREE.Matrix4().makeScale(cfg.synthScale, cfg.synthScale, cfg.synthScale))
     .multiply(new THREE.Matrix4().makeTranslation(-C.x, -C.y, -C.z))
-    .multiply(new THREE.Matrix4().compose(basePos, baseQuat, new THREE.Vector3(baseScale, baseScale, baseScale)));
-  realPivot.matrixAutoUpdate = false; realPivot.matrix.copy(M); realPivot.matrixWorldNeedsUpdate = true;
-  synthRoot.position.z = side ? -1.6 : 0;
+    .multiply(new THREE.Matrix4().compose(synthPos, synthQuat, new THREE.Vector3(synthScale, synthScale, synthScale)));
+  synthRoot.matrixAutoUpdate = false; synthRoot.matrix.copy(M); synthRoot.matrixWorldNeedsUpdate = true;
 }
 function checkReady() { if (realReady) { computeAlign(); apply(); window.READY = true; } }
 
 // headless/debug control hook (also the seam for a future per-part deviation heatmap)
-window.BT = { cfg, apply, camera, controls, get synthThorax() { return synthThorax; }, get synthHead() { return synthHead; },
+window.BT = { cfg, apply, camera, controls,
   set(k, v) { cfg[k] = v; apply(); },
-  lateral() { const C = synthThorax; camera.position.set(C.x, C.y + 0.12, C.z + 2.8); controls.target.copy(C); },
-  lookHead() { const H = synthHead; camera.position.set(H.x + 0.05, H.y + 0.08, H.z + 0.85); controls.target.copy(H); } };
+  lateral() { lateralView(); },
+  lookHead() { const e3 = new THREE.Vector3().setFromMatrixColumn(realFrame, 2); camera.position.copy(realHeadW).addScaledVector(e3, 0.95); controls.target.copy(realHeadW); } };
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
