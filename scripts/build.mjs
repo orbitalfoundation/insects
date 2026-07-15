@@ -9,7 +9,7 @@
 // one; index.html (served no-cache — see deploy/Caddyfile) points at the current
 // hash, so a deploy is picked up immediately.
 import { build } from 'esbuild';
-import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, copyFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -52,6 +52,24 @@ html = html
   .replace('<script type="module" src="/src/main.js"></script>', `<script type="module" src="./${jsFile}"></script>`);
 
 await writeFile(join(DIST, 'index.html'), html);
+
+// 2b. bee-test overlay tool: second bundle + copy the (CC-BY) reference model into dist/scan.
+const beeRes = await build({
+  entryPoints: [join(ROOT, 'src/bee-test.js')], bundle: true, format: 'esm', minify: true,
+  sourcemap: true, target: ['es2020'], outdir: DIST, entryNames: 'bee-test-[hash]',
+  assetNames: 'asset-[hash]', logLevel: 'info', metafile: true,
+});
+const beeJs = Object.keys(beeRes.metafile.outputs).map((f) => f.split('/').pop())
+  .find((f) => f.endsWith('.js') && !f.endsWith('.map'));
+let beeHtml = await readFile(join(ROOT, 'bee-test.html'), 'utf8');
+beeHtml = beeHtml
+  .replace('<link rel="stylesheet" href="/node_modules/lil-gui/dist/lil-gui.css" />', `<style>${guiCss}</style>`)
+  .replace(/<script type="importmap">[\s\S]*?<\/script>/, '')
+  .replace('<script type="module" src="/src/bee-test.js"></script>', `<script type="module" src="./${beeJs}"></script>`);
+await writeFile(join(DIST, 'bee-test.html'), beeHtml);
+await mkdir(join(DIST, 'scan'), { recursive: true });
+await copyFile(join(ROOT, 'scan/honeybee_art.glb'), join(DIST, 'scan/honeybee_art.glb'));
+await copyFile(join(ROOT, 'scan/honeybee_art.CREDIT.txt'), join(DIST, 'scan/honeybee_art.CREDIT.txt')).catch(() => {});
 
 // 3. Report size.
 const bytes = Object.values(result.metafile.outputs).reduce((a, o) => a + o.bytes, 0);

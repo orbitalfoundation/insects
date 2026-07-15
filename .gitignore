@@ -22,3 +22,7 @@ scan/*.glb
 scan/*.gltf
 scan/*.bin
 scan/*.zip
+
+# committed reference model for bee-test (CC-BY, credited)
+!scan/honeybee_art.glb
+!scan/honeybee_art.CREDIT.txt
