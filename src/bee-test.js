@@ -85,12 +85,7 @@ new GLTFLoader().load('/scan/honeybee_art.glb', (g) => {
     const m = new THREE.Mesh(bg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, transparent: true, opacity: 1, side: THREE.DoubleSide }));
     m.userData.part = part; realParts[part] = m; realRoot.add(m);
   }
-  // normalise: body (head+thorax+abdomen) X-extent → TARGET, centre body at origin
-  const bb = new THREE.Box3();
-  for (const p of ['head', 'thorax', 'abdomen']) if (realParts[p]) bb.expandByObject(realParts[p]);
-  const s = TARGET / (bb.max.x - bb.min.x); const ctr = bb.getCenter(new THREE.Vector3());
-  realRoot.scale.setScalar(s); realRoot.position.set(-ctr.x * s, -ctr.y * s, -ctr.z * s);
-  realReady = true; checkReady();
+  realReady = true; checkReady();   // alignment done in checkReady (3-landmark similarity fit)
 });
 
 // ---- SYNTHETIC bee: our rig ----
@@ -100,12 +95,12 @@ rig.position.set(0, 0, 0);                       // undo the ground-lift for ove
 synthRoot.add(rig);
 const synthMat = new THREE.MeshStandardMaterial({ color: 0x35e0ff, roughness: 0.5, wireframe: true, transparent: true, opacity: 0.9 });
 rig.traverse((o) => { if (o.isInstancedMesh) o.visible = false; else if (o.isMesh) o.material = synthMat; }); // hide fuzz in overlay
-{
-  const bb = new THREE.Box3();
-  bb.expandByObject(rig.bodyParts.headMesh); bb.expandByObject(rig.bodyParts.thorax); bb.expandByObject(rig.bodyParts.abGroup);
-  const s = TARGET / (bb.max.x - bb.min.x); const ctr = bb.getCenter(new THREE.Vector3());
-  synthRoot.scale.setScalar(s); synthRoot.position.set(-ctr.x * s, -ctr.y * s, -ctr.z * s);
-}
+{ // tag synthetic meshes by part so `isolate` filters the synthetic too
+  const tag = (o, part) => o.traverse((c) => { if (c.isMesh) c.userData.synthPart = part; });
+  tag(rig.bodyParts.headMesh, 'head'); (rig.eyeMeshes || []).forEach((e) => (e.userData.synthPart = 'eye'));
+  tag(rig.bodyParts.thorax, 'thorax'); tag(rig.bodyParts.abGroup, 'abdomen');
+  rig.legs.forEach((l) => tag(l.limb.root, 'leg')); rig.antennae.forEach((a) => tag(a.limb.root, 'antenna'));
+  (rig.wings || []).forEach((w) => w.mesh && tag(w.mesh, 'wing')); }
 
 // ---- GUI ----
 const cfg = { real: true, synth: true, realOpacity: 0.85, synthWire: true, synthOpacity: 0.9,
@@ -119,10 +114,32 @@ gui.add(cfg, 'synthOpacity', 0.1, 1, 0.05).name('synth opacity').onChange(apply)
 gui.add(cfg, 'isolate', ['all', ...PARTS]).name('isolate part').onChange(apply);
 gui.add(cfg, 'mode', ['overlay', 'sidebyside']).name('layout').onChange(apply);
 const fa = gui.addFolder('fine align (real)');
-fa.add(cfg, 'realRotY', -0.6, 0.6, 0.01).name('rotate Y').onChange(apply);
+fa.add(cfg, 'realRotY', -Math.PI, Math.PI, 0.01).name('rotate Y').onChange(apply);
 fa.add(cfg, 'realScale', 0.7, 1.3, 0.01).name('scale').onChange(apply);
 fa.add(cfg, 'realX', -1, 1, 0.02).name('shift X').onChange(apply);
 fa.add(cfg, 'realY', -1, 1, 0.02).name('shift Y').onChange(apply);
+
+// ---- 3-landmark similarity alignment (head/thorax/abdomen centroids) ----
+const basePos = new THREE.Vector3(), baseQuat = new THREE.Quaternion(); let baseScale = 1; const synthThorax = new THREE.Vector3(); const synthHead = new THREE.Vector3();
+const bcenter = (...objs) => { const b = new THREE.Box3(); for (const o of objs) { o.updateWorldMatrix(true, true); b.expandByObject(o); } return b.getCenter(new THREE.Vector3()); };
+function frameMat(h, t, a) {                     // orthonormal frame from 3 tagma centroids
+  const e1 = new THREE.Vector3().subVectors(h, t).normalize();
+  const v = new THREE.Vector3().subVectors(a, t);
+  const e3 = new THREE.Vector3().crossVectors(e1, v).normalize();
+  const e2 = new THREE.Vector3().crossVectors(e3, e1).normalize();
+  return new THREE.Matrix4().makeBasis(e1, e2, e3);
+}
+function computeAlign() {
+  realRoot.updateMatrixWorld(true); synthRoot.updateMatrixWorld(true);
+  const rh = bcenter(realParts.head), rt = bcenter(realParts.thorax), ra = bcenter(realParts.abdomen);
+  const sh = bcenter(rig.bodyParts.headMesh), st = bcenter(rig.bodyParts.thorax), sa = bcenter(rig.bodyParts.abGroup);
+  const Rm = new THREE.Matrix4().multiplyMatrices(frameMat(sh, st, sa), frameMat(rh, rt, ra).transpose()); // real frame → synth frame
+  baseQuat.setFromRotationMatrix(Rm);
+  baseScale = sh.distanceTo(st) / Math.max(rh.distanceTo(rt), 1e-6);
+  basePos.copy(st).sub(rt.clone().applyMatrix4(Rm).multiplyScalar(baseScale));  // map real thorax → synth thorax
+  synthThorax.copy(st); synthHead.copy(sh);
+  controls.target.copy(st); camera.position.set(st.x + 0.4, st.y + 0.25, st.z + 2.6); // frame a lateral-ish view
+}
 
 function apply() {
   realPivot.visible = cfg.real; synthRoot.visible = cfg.synth;
@@ -131,15 +148,26 @@ function apply() {
     realParts[part].material.opacity = cfg.realOpacity;
   }
   synthMat.wireframe = cfg.synthWire; synthMat.opacity = cfg.synthOpacity;
-  // realRoot (inside pivot) holds the normalisation; the pivot flips it to face +X like the
-  // synthetic bee and carries the fine-align, rotating about the shared body centre.
-  realPivot.rotation.y = Math.PI + cfg.realRotY;
-  realPivot.scale.setScalar(cfg.realScale);
-  const side = cfg.mode === 'sidebyside';
-  realPivot.position.set(cfg.realX + (side ? 1.4 : 0), cfg.realY, 0);
-  synthRoot.position.z = side ? -1.4 : 0;
+  rig.traverse((o) => { if (o.isInstancedMesh || !o.isMesh) return; const p = o.userData.synthPart || 'thorax';
+    o.visible = (cfg.isolate === 'all' || p === cfg.isolate || (cfg.isolate === 'head' && p === 'eye')); });
+  const side = cfg.mode === 'sidebyside', C = synthThorax;
+  // base similarity fit, then optional fine-align nudges rotating about the shared thorax C
+  const M = new THREE.Matrix4()
+    .multiply(new THREE.Matrix4().makeTranslation(cfg.realX + (side ? 1.6 : 0), cfg.realY, 0))
+    .multiply(new THREE.Matrix4().makeTranslation(C.x, C.y, C.z))
+    .multiply(new THREE.Matrix4().makeRotationY(cfg.realRotY))
+    .multiply(new THREE.Matrix4().makeScale(cfg.realScale, cfg.realScale, cfg.realScale))
+    .multiply(new THREE.Matrix4().makeTranslation(-C.x, -C.y, -C.z))
+    .multiply(new THREE.Matrix4().compose(basePos, baseQuat, new THREE.Vector3(baseScale, baseScale, baseScale)));
+  realPivot.matrixAutoUpdate = false; realPivot.matrix.copy(M); realPivot.matrixWorldNeedsUpdate = true;
+  synthRoot.position.z = side ? -1.6 : 0;
 }
-function checkReady() { if (realReady) { apply(); window.READY = true; } }
+function checkReady() { if (realReady) { computeAlign(); apply(); window.READY = true; } }
 
+// headless/debug control hook (also the seam for a future per-part deviation heatmap)
+window.BT = { cfg, apply, camera, controls, get synthThorax() { return synthThorax; }, get synthHead() { return synthHead; },
+  set(k, v) { cfg[k] = v; apply(); },
+  lateral() { const C = synthThorax; camera.position.set(C.x, C.y + 0.12, C.z + 2.8); controls.target.copy(C); },
+  lookHead() { const H = synthHead; camera.position.set(H.x + 0.05, H.y + 0.08, H.z + 0.85); controls.target.copy(H); } };
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
