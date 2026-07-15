@@ -32,7 +32,7 @@ const controls = new OrbitControls(camera, renderer.domElement); controls.enable
 scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.0));
 const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(3, 5, 4); scene.add(key);
 const fill = new THREE.DirectionalLight(0xbfd0ff, 0.6); fill.position.set(-4, 2, -3); scene.add(fill);
-scene.add(new THREE.GridHelper(6, 12, 0x223, 0x1a2028));
+const grid = new THREE.GridHelper(6, 12, 0x223, 0x1a2028); scene.add(grid);
 
 const TARGET = 2.0; // normalise both bodies to this length along X
 const bodyExtentX = (obj, pred) => {          // X-extent of vertices passing pred(worldPart)
@@ -122,22 +122,28 @@ fa.add(cfg, 'realY', -1, 1, 0.02).name('shift Y').onChange(apply);
 // ---- 3-landmark similarity alignment (head/thorax/abdomen centroids) ----
 const basePos = new THREE.Vector3(), baseQuat = new THREE.Quaternion(); let baseScale = 1; const synthThorax = new THREE.Vector3(); const synthHead = new THREE.Vector3();
 const bcenter = (...objs) => { const b = new THREE.Box3(); for (const o of objs) { o.updateWorldMatrix(true, true); b.expandByObject(o); } return b.getCenter(new THREE.Vector3()); };
-function frameMat(h, t, a) {                     // orthonormal frame from 3 tagma centroids
-  const e1 = new THREE.Vector3().subVectors(h, t).normalize();
-  const v = new THREE.Vector3().subVectors(a, t);
-  const e3 = new THREE.Vector3().crossVectors(e1, v).normalize();
-  const e2 = new THREE.Vector3().crossVectors(e3, e1).normalize();
+// frame from forward (head−thorax) + an OFF-AXIS ventral landmark (legs) to fix the roll —
+// head/thorax/abdomen are collinear and leave "up" undefined (→ upside-down bees).
+function frameMat(h, t, ventral) {
+  const e1 = new THREE.Vector3().subVectors(h, t).normalize();          // forward
+  const toV = new THREE.Vector3().subVectors(ventral, t);              // toward the legs (down)
+  const up = toV.addScaledVector(e1, -toV.dot(e1)).normalize().negate(); // ventral ⟂ axis, flipped = up
+  const e3 = new THREE.Vector3().crossVectors(e1, up).normalize();      // lateral
+  const e2 = new THREE.Vector3().crossVectors(e3, e1).normalize();      // re-orthogonalised up
   return new THREE.Matrix4().makeBasis(e1, e2, e3);
 }
 function computeAlign() {
   realRoot.updateMatrixWorld(true); synthRoot.updateMatrixWorld(true);
-  const rh = bcenter(realParts.head), rt = bcenter(realParts.thorax), ra = bcenter(realParts.abdomen);
-  const sh = bcenter(rig.bodyParts.headMesh), st = bcenter(rig.bodyParts.thorax), sa = bcenter(rig.bodyParts.abGroup);
-  const Rm = new THREE.Matrix4().multiplyMatrices(frameMat(sh, st, sa), frameMat(rh, rt, ra).transpose()); // real frame → synth frame
+  const rh = bcenter(realParts.head), rt = bcenter(realParts.thorax);
+  const rl = realParts.leg ? bcenter(realParts.leg) : bcenter(realParts.abdomen);
+  const sh = bcenter(rig.bodyParts.headMesh), st = bcenter(rig.bodyParts.thorax);
+  const sl = bcenter(...rig.legs.map((l) => l.limb.root));
+  const Rm = new THREE.Matrix4().multiplyMatrices(frameMat(sh, st, sl), frameMat(rh, rt, rl).transpose()); // real frame → synth frame
   baseQuat.setFromRotationMatrix(Rm);
   baseScale = sh.distanceTo(st) / Math.max(rh.distanceTo(rt), 1e-6);
   basePos.copy(st).sub(rt.clone().applyMatrix4(Rm).multiplyScalar(baseScale));  // map real thorax → synth thorax
   synthThorax.copy(st); synthHead.copy(sh);
+  grid.position.y = new THREE.Box3().setFromObject(rig).min.y - 0.02; // drop the grid to the feet
   controls.target.copy(st); camera.position.set(st.x + 0.4, st.y + 0.25, st.z + 2.6); // frame a lateral-ish view
 }
 
