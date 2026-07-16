@@ -85,7 +85,17 @@ const gui = new GUI({ title: '🪲 insect' });
 gui.domElement.id = 'gui-panel';
 if (gui.$title) gui.$title.style.display = 'none';
 
-function setSpecies(id) { currentSpecies = id; params = makeSpecies(id); rebuild(false); highlightSpecies(id); refreshControllers(); }
+// Mutate `params` IN PLACE (preserve nested object identity) so every GUI controller —
+// bound to params.surface / params.body.* at construction — keeps pointing at live data
+// across a species switch. Reassigning params (the old code) orphaned the controllers.
+function deepReplace(target, src) {
+  for (const k in src) {
+    const sv = src[k];
+    if (sv && typeof sv === 'object' && !Array.isArray(sv) && target[k] && typeof target[k] === 'object') deepReplace(target[k], sv);
+    else target[k] = Array.isArray(sv) ? sv.slice() : sv;
+  }
+}
+function setSpecies(id) { currentSpecies = id; deepReplace(params, makeSpecies(id)); rebuild(false); highlightSpecies(id); refreshControllers(); }
 
 const fExplore = gui.addFolder('explore');
 const speciesChips = {};
@@ -106,6 +116,25 @@ fLook.addColor(params.surface, 'base').name('base colour').listen().onChange(rb)
 fLook.add(params.surface, 'finish', ['matte', 'gloss', 'iridescent', 'metallic', 'fuzzy']).name('finish').listen().onChange(rb);
 fLook.add(params.surface, 'irid', 0, 1, 0.01).name('iridescence').listen().onChange(rb);
 fLook.close();
+
+// Morph the body WITHIN the family — proportions only, never structure (no adding legs or
+// segments). Bound to live param objects; .listen() so they track a species switch.
+const fShape = gui.addFolder('shape');
+fShape.add(params, 'scale', 0.4, 2.0, 0.01).name('overall size').listen().onChange(rb);
+fShape.add(params.body, 'arc', 0.0, 0.8, 0.01).name('body arch').listen().onChange(rb);
+fShape.add(params.body.thorax, 'h', 0.2, 0.9, 0.01).name('thorax bulk').listen().onChange(rb);
+fShape.add(params.body.abdomen, 'len', 0.4, 1.6, 0.01).name('abdomen length').listen().onChange(rb);
+fShape.add(params.body.abdomen, 'w', 0.25, 0.8, 0.01).name('abdomen girth').listen().onChange(rb);
+fShape.add(params.body.abdomen, 'taper', 0.0, 1.0, 0.01).name('abdomen taper').listen().onChange(rb);
+fShape.add(params.body.abdomen, 'droop', -0.3, 0.7, 0.01).name('abdomen droop').listen().onChange(rb);
+fShape.add(params.body.head, 'len', 0.15, 0.5, 0.01).name('head size').listen().onChange(rb);
+fShape.add(params.head, 'eye', 0.1, 0.9, 0.01).name('eye size').listen().onChange(rb);
+fShape.add(params.legs, 'femur', 0.15, 0.7, 0.01).name('leg length').listen().onChange(rb);
+fShape.add(params.legs, 'thick', 0.012, 0.08, 0.001).name('leg thickness').listen().onChange(rb);
+fShape.add(params.legs, 'spread', 0.0, 0.7, 0.01).name('leg splay').listen().onChange(rb);
+fShape.add(params.antennae, 'len', 0.1, 1.0, 0.01).name('antenna length').listen().onChange(rb);
+fShape.add(params.surface, 'fuzz', 0.0, 1.0, 0.01).name('fuzziness').listen().onChange(rb);
+fShape.close();
 
 const fScene = gui.addFolder('scene');
 fScene.add(ui, 'autoRotate').name('auto-rotate').onChange((v) => (controls.autoRotate = v));

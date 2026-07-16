@@ -26,3 +26,8 @@ scan/*.zip
 # committed reference model for bee-test (CC-BY, credited)
 !scan/honeybee_art.glb
 !scan/honeybee_art.CREDIT.txt
+
+# heavy reference corpus (16-insect pack: converted glbs + preview renders) — local only
+scan/pack/
+# python bytecode from headless scripts
+__pycache__/

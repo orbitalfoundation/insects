@@ -61,8 +61,8 @@ const OVERRIDES = {
     // the abdomen a down-angled oval closing the rear of the arc.
     body: { arc: 0.42, head: { len: 0.3, w: 0.48, h: 0.4, neck: 0.05, tilt: -0.12, teardrop: 0.55, heart: 0.2 },
       thorax: { len: 0.42, w: 0.5, h: 0.54, pronotum: 0 },
-      abdomen: { len: 0.92, w: 0.42, h: 0.5, segs: 7, taper: 0.85, waist: 0.5, droop: 0.1, tailBlunt: 0.5 } },
-    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.028, spread: 0.4, hind: 1.3, hindThick: 1.7 },
+      abdomen: { len: 0.92, w: 0.5, h: 0.52, segs: 7, taper: 0.85, waist: 0.5, droop: 0.35, tailBlunt: 0.5 } },
+    legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.042, spread: 0.2, hind: 1.3, hindThick: 1.7 },
     antennae: { type: 'geniculate', len: 0.36, segs: 8, thick: 0.02, elbow: 1.0 },
     head: { eye: 0.26 },
     surface: { base: '#c89020', finish: 'fuzzy', bands: 0.8, bandColor: '#20160a', fuzz: 0.8,
