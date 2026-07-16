@@ -120,20 +120,27 @@ fLook.close();
 // Morph the body WITHIN the family — proportions only, never structure (no adding legs or
 // segments). Bound to live param objects; .listen() so they track a species switch.
 const fShape = gui.addFolder('shape');
-fShape.add(params, 'scale', 0.4, 2.0, 0.01).name('overall size').listen().onChange(rb);
-fShape.add(params.body, 'arc', 0.0, 0.8, 0.01).name('body arch').listen().onChange(rb);
-fShape.add(params.body.thorax, 'h', 0.2, 0.9, 0.01).name('thorax bulk').listen().onChange(rb);
-fShape.add(params.body.abdomen, 'len', 0.4, 1.6, 0.01).name('abdomen length').listen().onChange(rb);
-fShape.add(params.body.abdomen, 'w', 0.25, 0.8, 0.01).name('abdomen girth').listen().onChange(rb);
-fShape.add(params.body.abdomen, 'taper', 0.0, 1.0, 0.01).name('abdomen taper').listen().onChange(rb);
-fShape.add(params.body.abdomen, 'droop', -0.3, 0.7, 0.01).name('abdomen droop').listen().onChange(rb);
-fShape.add(params.body.head, 'len', 0.15, 0.5, 0.01).name('head size').listen().onChange(rb);
-fShape.add(params.head, 'eye', 0.1, 0.9, 0.01).name('eye size').listen().onChange(rb);
-fShape.add(params.legs, 'femur', 0.15, 0.7, 0.01).name('leg length').listen().onChange(rb);
-fShape.add(params.legs, 'thick', 0.012, 0.08, 0.001).name('leg thickness').listen().onChange(rb);
-fShape.add(params.legs, 'spread', 0.0, 0.7, 0.01).name('leg splay').listen().onChange(rb);
-fShape.add(params.antennae, 'len', 0.1, 1.0, 0.01).name('antenna length').listen().onChange(rb);
-fShape.add(params.surface, 'fuzz', 0.0, 1.0, 0.01).name('fuzziness').listen().onChange(rb);
+// Guarded add: lil-gui's .add() returns undefined for an absent property (and only logs),
+// so chaining .name() would throw and kill GUI init. Skip any control whose key isn't on
+// this species — never crash the whole panel over one missing param.
+function addShape(obj, key, min, max, step, label) {
+  if (!obj || obj[key] === undefined) return;
+  fShape.add(obj, key, min, max, step).name(label).listen().onChange(rb);
+}
+addShape(params, 'scale', 0.4, 2.0, 0.01, 'overall size');
+addShape(params.body, 'arc', 0.0, 0.8, 0.01, 'body arch');
+addShape(params.body.thorax, 'h', 0.2, 0.9, 0.01, 'thorax bulk');
+addShape(params.body.abdomen, 'len', 0.4, 1.6, 0.01, 'abdomen length');
+addShape(params.body.abdomen, 'w', 0.25, 0.8, 0.01, 'abdomen girth');
+addShape(params.body.abdomen, 'taper', 0.0, 1.0, 0.01, 'abdomen taper');
+addShape(params.body.abdomen, 'droop', -0.3, 0.7, 0.01, 'abdomen droop');
+addShape(params.body.head, 'len', 0.15, 0.5, 0.01, 'head size');
+addShape(params.head, 'eye', 0.1, 0.9, 0.01, 'eye size');
+addShape(params.legs, 'femur', 0.15, 0.7, 0.01, 'leg length');
+addShape(params.legs, 'thick', 0.012, 0.08, 0.001, 'leg thickness');
+addShape(params.legs, 'spread', 0.0, 0.7, 0.01, 'leg splay');
+addShape(params.antennae, 'len', 0.1, 1.0, 0.01, 'antenna length');
+addShape(params.surface, 'fuzz', 0.0, 1.0, 0.01, 'fuzziness');
 fShape.close();
 
 const fScene = gui.addFolder('scene');

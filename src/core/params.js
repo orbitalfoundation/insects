@@ -17,6 +17,9 @@ export function defaults() {
     scale: 1.0, // log-ish size handle; camera frames by extent
 
     body: {
+      // Dorsal catenary: bends head + abdomen down off the thorax peak. 0 = straight
+      // (most orders); the honeybee arches it. Universal so every species carries the key.
+      arc: 0,
       // Head (ellipsoid at the front, +X).
       head: { len: 0.34, w: 0.42, h: 0.34, neck: 0.12, tilt: -0.1, teardrop: 0, heart: 0, superness: 1 },
       // Thorax — the leg-bearing box (three fused segments modelled as one lobe).
