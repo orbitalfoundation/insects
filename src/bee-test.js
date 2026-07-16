@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import GUI from 'lil-gui';
 import { InsectRig } from './rig/InsectRig.js';
 import { makeSpecies } from './species/presets.js';
+import { buildHull } from './rig/hull.js';
 
 // ---- part classification + palette (shared by real + synthetic) ----
 const PARTS = ['head', 'thorax', 'abdomen', 'leg', 'antenna', 'wing', 'eye', 'mouth'];
@@ -85,8 +86,26 @@ new GLTFLoader().load('/scan/honeybee_art.glb', (g) => {
     const m = new THREE.Mesh(bg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, transparent: true, opacity: 1, side: THREE.DoubleSide }));
     m.userData.part = part; realParts[part] = m; realRoot.add(m);
   }
+  // ARCHITECTURE PROOF: hang OUR procedural head on the REAL head bone's transform. The real
+  // bee's rig IS the pose; we only swap the vertices. Sized to the head's extent in the bone's
+  // own frame, placed at the bone's world matrix → our shape, the artist's exact placement.
+  g.scene.updateMatrixWorld(true);
+  const headBone = bones.find((b) => /head/i.test(b.name || ''));
+  if (headBone) {
+    const inv = new THREE.Matrix4().copy(headBone.matrixWorld).invert();
+    const bb = new THREE.Box3(), v = new THREE.Vector3(), hp = realParts.head.geometry.attributes.position;
+    for (let i = 0; i < hp.count; i++) bb.expandByPoint(v.fromBufferAttribute(hp, i).applyMatrix4(inv));
+    const sz = bb.getSize(new THREE.Vector3()), ctr = bb.getCenter(new THREE.Vector3());
+    const head = buildHull({ material: new THREE.MeshStandardMaterial({ color: 0x39e07a, roughness: 0.55 }),
+      length: sz.x, w: sz.z * 0.5, h: sz.y * 0.5, section: { teardrop: 0.55, heart: 0.2 } });
+    head.position.copy(ctr);
+    swapHeadGroup = new THREE.Group(); swapHeadGroup.add(head);
+    swapHeadGroup.applyMatrix4(headBone.matrixWorld); swapHeadGroup.visible = false;
+    realRoot.add(swapHeadGroup);
+  }
   realReady = true; checkReady();   // alignment done in checkReady (3-landmark similarity fit)
 });
+let swapHeadGroup = null;
 
 // ---- SYNTHETIC bee: our rig ----
 const synthRoot = new THREE.Group(); scene.add(synthRoot);
@@ -104,7 +123,7 @@ rig.traverse((o) => { if (o.isInstancedMesh) o.visible = false; else if (o.isMes
 
 // ---- GUI ----
 const cfg = { real: true, synth: true, realOpacity: 0.85, synthWire: true, synthOpacity: 0.9,
-  isolate: 'all', mode: 'overlay', synthRotY: 0, synthScale: 1, synthY: 0, synthX: 0 };
+  isolate: 'all', mode: 'overlay', synthRotY: 0, synthScale: 1, synthY: 0, synthX: 0, swapHead: false };
 const gui = new GUI({ title: 'bee-test' });
 gui.add(cfg, 'real').name('show real').onChange(apply);
 gui.add(cfg, 'synth').name('show synthetic').onChange(apply);
@@ -113,6 +132,7 @@ gui.add(cfg, 'synthWire').name('synth wireframe').onChange(apply);
 gui.add(cfg, 'synthOpacity', 0.1, 1, 0.05).name('synth opacity').onChange(apply);
 gui.add(cfg, 'isolate', ['all', ...PARTS]).name('isolate part').onChange(apply);
 gui.add(cfg, 'mode', ['overlay', 'sidebyside']).name('layout').onChange(apply);
+gui.add(cfg, 'swapHead').name('swap head (ours on real bone)').onChange(apply);
 const fa = gui.addFolder('fine align (synthetic → real)');   // real is the fixed reference; nudge synth
 fa.add(cfg, 'synthRotY', -Math.PI, Math.PI, 0.01).name('rotate Y').onChange(apply);
 fa.add(cfg, 'synthScale', 0.7, 1.3, 0.01).name('scale').onChange(apply);
@@ -167,6 +187,9 @@ function apply() {
     realParts[part].visible = (cfg.isolate === 'all' || cfg.isolate === part);
     realParts[part].material.opacity = cfg.realOpacity;
   }
+  // swap: replace the REAL head vertices with OUR head on the real head bone (same pose)
+  if (swapHeadGroup) swapHeadGroup.visible = cfg.real && cfg.swapHead && (cfg.isolate === 'all' || cfg.isolate === 'head');
+  if (cfg.swapHead && realParts.head) realParts.head.visible = false;
   synthMat.wireframe = cfg.synthWire; synthMat.opacity = cfg.synthOpacity;
   rig.traverse((o) => { if (o.isInstancedMesh || !o.isMesh) return; const p = o.userData.synthPart || 'thorax';
     o.visible = (cfg.isolate === 'all' || p === cfg.isolate || (cfg.isolate === 'head' && p === 'eye')); });
