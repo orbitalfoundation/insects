@@ -7,7 +7,7 @@ const dir = readdirSync(base).find((d) => d.startsWith('chromium-') && !d.includ
 const CHROME = `${base}/${dir}/chrome-linux64/chrome`;
 const PORT = 9236;
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, '--use-gl=angle',
-  '--use-angle=vulkan', '--enable-unsafe-swiftshader', '--window-size=1200,1000', '--no-first-run',
+  '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--window-size=1200,1000', '--no-first-run',
   '--no-sandbox', '--user-data-dir=/tmp/shotchrome', 'about:blank']);
 chrome.stderr.on('data', () => {});
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

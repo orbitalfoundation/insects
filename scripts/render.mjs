@@ -22,7 +22,7 @@ const SPECIES = (process.env.SPECIES ||
 
 const chrome = spawn(CHROME, [
   '--headless=new', `--remote-debugging-port=${PORT}`,
-  '--use-gl=angle', '--use-angle=vulkan', '--enable-unsafe-swiftshader',
+  '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
   '--window-size=1280,900', '--no-first-run', '--no-sandbox',
   '--user-data-dir=/tmp/bugchrome', 'about:blank',
 ]);

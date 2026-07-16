@@ -12,7 +12,7 @@ const CHROME = `${base}/${dir}/chrome-linux64/chrome`;
 if (!existsSync(CHROME)) { console.error('no chromium'); process.exit(1); }
 const PORT = 9232;
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, '--use-gl=angle',
-  '--use-angle=vulkan', '--enable-unsafe-swiftshader', '--window-size=900,900', '--no-first-run',
+  '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--window-size=900,900', '--no-first-run',
   '--no-sandbox', '--user-data-dir=/tmp/clipchrome', 'about:blank']);
 chrome.stderr.on('data', () => {});
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
