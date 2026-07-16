@@ -189,6 +189,8 @@ function checkReady() { if (realReady) { computeAlign(); apply(); window.READY =
 window.BT = { cfg, apply, camera, controls,
   set(k, v) { cfg[k] = v; apply(); },
   lateral() { lateralView(); },
-  lookHead() { const e3 = new THREE.Vector3().setFromMatrixColumn(realFrame, 2); camera.position.copy(realHeadW).addScaledVector(e3, 0.95); controls.target.copy(realHeadW); } };
+  lookHead() { const e3 = new THREE.Vector3().setFromMatrixColumn(realFrame, 2); camera.position.copy(realHeadW).addScaledVector(e3, 0.95); controls.target.copy(realHeadW); },
+  front() { const e1 = new THREE.Vector3().setFromMatrixColumn(realFrame, 0), e2 = new THREE.Vector3().setFromMatrixColumn(realFrame, 1);
+    camera.position.copy(realHeadW).addScaledVector(e1, 1.1).addScaledVector(e2, 0.1); controls.target.copy(realHeadW); } };
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();

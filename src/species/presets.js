@@ -59,7 +59,7 @@ const OVERRIDES = {
     displayName: 'Honeybee', order: 'Hymenoptera', scale: 0.9,
     // arc: the dorsal catenary; head.tilt tips the face down; strong taper + droop make
     // the abdomen a down-angled oval closing the rear of the arc.
-    body: { arc: 0.42, head: { len: 0.3, w: 0.4, h: 0.36, tilt: -0.12 },
+    body: { arc: 0.42, head: { len: 0.3, w: 0.42, h: 0.4, tilt: -0.12, teardrop: 0.5, heart: 0.16 },
       thorax: { len: 0.42, w: 0.5, h: 0.54, pronotum: 0 },
       abdomen: { len: 0.92, w: 0.42, h: 0.5, segs: 7, taper: 0.85, waist: 0.5, droop: 0.1, tailBlunt: 0.5 } },
     legs: { type: 'cursorial', femur: 0.3, tibia: 0.34, tarsus: 0.2, thick: 0.028, spread: 0.4, hind: 1.3, hindThick: 1.7 },

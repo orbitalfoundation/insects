@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { lerp, clamp } from '../core/math.js';
+import { buildHull } from './hull.js';
 
 // The segmented insect body: three tagmata assembled as parts along the body axis X
 // (head at +X front, abdomen at -X rear; up +Y, sides ±Z). Head and abdomen are their
@@ -33,7 +34,12 @@ export function buildBody(p, material) {
   // crown sits just below the thorax peak — closing the front of the arc.
   headGroup.position.set(TL * 0.5 + b.head.neck, TH * 0.04 + arc * TH * 0.22, 0);
   headGroup.rotation.z = b.head.tilt - arc;
-  const head = ellipsoid(b.head.len * 0.5, b.head.h * 0.5, b.head.w * 0.5, material);
+  // Head as the richer lofted-hull primitive: a morphable cross-section (ellipse → teardrop →
+  // cardioid/obcordate) lofted front-to-back. A bare ellipsoid can't be a bee head; this can.
+  const head = buildHull({
+    material, length: b.head.len, w: b.head.w * 0.5, h: b.head.h * 0.5,
+    section: { teardrop: b.head.teardrop ?? 0, heart: b.head.heart ?? 0, superness: b.head.superness ?? 1 },
+  });
   head.position.x = b.head.len * 0.5;
   headGroup.add(head);
   root.add(headGroup);

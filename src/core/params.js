@@ -18,7 +18,7 @@ export function defaults() {
 
     body: {
       // Head (ellipsoid at the front, +X).
-      head: { len: 0.34, w: 0.42, h: 0.34, neck: 0.12, tilt: -0.1 },
+      head: { len: 0.34, w: 0.42, h: 0.34, neck: 0.12, tilt: -0.1, teardrop: 0, heart: 0, superness: 1 },
       // Thorax — the leg-bearing box (three fused segments modelled as one lobe).
       thorax: { len: 0.55, w: 0.5, h: 0.44, pronotum: 0.3 },
       // Abdomen — segmented, tapering; `waist` constricts the front (wasp petiole).
