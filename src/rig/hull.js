@@ -38,7 +38,7 @@ export function buildHull(o) {
   }
   for (let iu = 0; iu < US; iu++) for (let it = 0; it < TS; it++) {
     const p0 = iu * (TS + 1) + it, p1 = p0 + (TS + 1);
-    idx.push(p0, p1, p0 + 1, p0 + 1, p1, p1 + 1);
+    idx.push(p0, p0 + 1, p1, p0 + 1, p1 + 1, p1);   // outward-facing winding
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));

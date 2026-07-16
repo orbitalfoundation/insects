@@ -47,8 +47,8 @@ export function buildBody(p, material) {
   // rather than showing a gap between two balls.
   const connectors = [];
   if (b.head.neck >= 0) {
-    const neck = ellipsoid(b.head.neck * 0.5 + TL * 0.12, TH * 0.24, TW * 0.28, material);
-    neck.position.set(TL * 0.5 + b.head.neck * 0.5, -TH * 0.06 + arc * TH * 0.08, 0);
+    const neck = ellipsoid(b.head.neck * 0.5 + TL * 0.09, TH * 0.15, TW * 0.17, material);
+    neck.position.set(TL * 0.5 + b.head.neck * 0.5, -TH * 0.12 + arc * TH * 0.08, 0);
     root.add(neck);
     connectors.push(neck);
   }
@@ -107,7 +107,7 @@ export function buildBody(p, material) {
   const eyeSockets = [];
   for (const side of [-1, 1]) {
     // Upper-rear of the head side, leaving the face (front + lower) clear — as in life.
-    eyeSockets.push({ pos: new THREE.Vector3(b.head.len * 0.4, b.head.h * 0.34, side * b.head.w * 0.42), side, parent: headGroup });
+    eyeSockets.push({ pos: new THREE.Vector3(b.head.len * 0.42, b.head.h * 0.36, side * b.head.w * 0.3), side, parent: headGroup });
   }
 
   return { root, headGroup, headMesh: head, abGroup, thorax, connectors, legSockets, antennaSockets, wingSockets, eyeSockets,

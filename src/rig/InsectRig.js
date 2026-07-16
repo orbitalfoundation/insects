@@ -85,6 +85,27 @@ export class InsectRig extends THREE.Group {
       this._poseLeg(rec, L);
       this.legs.push(rec);
     }
+    this._planFeet();
+  }
+
+  // Ground contact by KINEMATICS, not by moving parts. The body sits where it sits; each leg
+  // then bends its knee until its foot reaches the common stance plane. The foot pose FALLS OUT
+  // of the leg reaching down from its socket — no post-hoc translation/levelling of parts.
+  _planFeet() {
+    this.updateMatrixWorld(true);
+    const wp = new THREE.Vector3();
+    const footY = (l) => { l.limb.tip.getWorldPosition(wp); return wp.y; };
+    const ground = Math.min(...this.legs.map(footY));   // lowest natural reach = the stance plane
+    for (const l of this.legs) {
+      const j = l.limb.joints[l.jK], a0 = j.rotation.x;
+      const at = (a) => { j.rotation.x = a; this.updateMatrixWorld(true); return footY(l); };
+      let lo = a0 - 1.3, hi = a0 + 1.3, ylo = at(lo), yhi = at(hi);
+      if ((ylo - ground) * (yhi - ground) <= 0) {        // bracketed → bisect the knee to reach ground
+        for (let it = 0; it < 18; it++) { const m = (lo + hi) / 2, ym = at(m);
+          if ((ylo - ground) * (ym - ground) <= 0) hi = m; else { lo = m; ylo = ym; } }
+        const solved = (lo + hi) / 2; at(solved); l.base.k = solved;   // gait animates from this rest angle
+      } else { j.rotation.x = a0; }
+    }
   }
 
   // Pose one leg into the classic insect zig-zag stance and record its rest angles +
@@ -204,7 +225,7 @@ export class InsectRig extends THREE.Group {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), this.eyeMat);
       eye.position.copy(sock.pos);
       // Vertical oval hugging the head side: short front-to-back, tall, flattened to the flank.
-      eye.scale.set(0.68, 1.45, 0.62);
+      eye.scale.set(0.6, 1.4, 0.44);  // flattened against the head flank (embedded, not a poking ball)
       eye.castShadow = true;
       sock.parent.add(eye);
       this.eyeMeshes.push(eye);

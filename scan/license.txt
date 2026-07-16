@@ -1,0 +1,11 @@
+Model Information:
+* title:	Bumblebee - CT Scan
+* source:	https://sketchfab.com/3d-models/bumblebee-ct-scan-73ac914f3deb409aa2b6057e21914e21
+* author:	etainproject (https://sketchfab.com/etainproject)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Bumblebee - CT Scan" (https://sketchfab.com/3d-models/bumblebee-ct-scan-73ac914f3deb409aa2b6057e21914e21) by etainproject (https://sketchfab.com/etainproject) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
